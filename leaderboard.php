@@ -11,12 +11,251 @@ require_once 'config.php';
      ?department=      filter by dept
      ?search=          search by name / roll
      ?limit=           top N (default 100)
+     ?download=        csv or excel
+     ?ranking=         cgpa or weighted (default: cgpa)
 ══════════════════════════════════════════════ */
+
+// Handle download requests
+$downloadFormat = trim($_GET['download'] ?? '');
+if ($downloadFormat === 'csv' || $downloadFormat === 'excel') {
+    // Re-run the query with current filters
+    $semesterInfo = trim($_GET['semester_info'] ?? '');
+    $department   = trim($_GET['department']   ?? '');
+    $search       = trim($_GET['search']       ?? '');
+    $limit        = max(10, min(500, (int)($_GET['limit'] ?? 100)));
+    $rankingType  = trim($_GET['ranking'] ?? 'cgpa');
+
+    // Get custom weights for weighted ranking
+    $smartWeight  = max(0, min(100, (int)($_GET['smart_weight'] ?? 60)));
+    $cgpaWeight   = max(0, min(100, (int)($_GET['cgpa_weight'] ?? 40)));
+
+    // Ensure weights sum to 100, if not normalize them
+    $totalWeight = $smartWeight + $cgpaWeight;
+    if ($totalWeight > 0 && $totalWeight !== 100) {
+        $smartWeight = round(($smartWeight / $totalWeight) * 100);
+        $cgpaWeight = 100 - $smartWeight;
+    } elseif ($totalWeight === 0) {
+        $smartWeight = 60;
+        $cgpaWeight = 40;
+    }
+
+    $cteWhere  = ["cgpa IS NOT NULL", "cgpa != ''", "cgpa != 'N/A'"];
+    $cteParams = [];
+
+    if ($semesterInfo) {
+        $cteWhere[] = "semester_info = :sem";
+        $cteParams[':sem'] = $semesterInfo;
+    }
+    if ($department) {
+        $cteWhere[] = "(
+            department = :dept OR 
+            (department IS NULL OR department = '') AND (
+                exam_info REGEXP '[A-Z]{2,}-' AND SUBSTRING_INDEX(SUBSTRING_INDEX(exam_info, ' ', -1), '-', 1) = :dept OR
+                file_name REGEXP '^(AIML|IT|CSE|ECE|EEE|MECH|CIVIL)' AND REGEXP_SUBSTR(file_name, '^(AIML|IT|CSE|ECE|EEE|MECH|CIVIL)') = :dept OR
+                file_name LIKE CONCAT('%', :dept, '%')
+            )
+        )";
+        $cteParams[':dept'] = $department;
+    }
+    if ($search) {
+        $cteWhere[] = "(roll_no LIKE :s OR student_name LIKE :s2)";
+        $cteParams[':s'] = $cteParams[':s2'] = '%'.$search.'%';
+    }
+
+    $cteWhereClause = 'WHERE '.implode(' AND ', $cteWhere);
+
+    if ($rankingType === 'weighted') {
+        // Weighted ranking with custom weights
+        $smartWeightFactor = $smartWeight / 100;
+        $cgpaWeightFactor = $cgpaWeight / 100;
+        
+        $sql = "WITH latest_entry AS (
+                SELECT 
+                    sr.roll_no,
+                    sr.student_name,
+                    sr.father_name,
+                    CASE 
+                        WHEN sr.department IS NOT NULL AND sr.department != '' THEN sr.department
+                        WHEN sr.exam_info REGEXP '[A-Z]{2,}-' THEN SUBSTRING_INDEX(SUBSTRING_INDEX(sr.exam_info, ' ', -1), '-', 1)
+                        WHEN sr.file_name REGEXP '^(AIML|IT|CSE|ECE|EEE|MECH|CIVIL)' THEN REGEXP_SUBSTR(sr.file_name, '^(AIML|IT|CSE|ECE|EEE|MECH|CIVIL)')
+                        WHEN sr.file_name LIKE '%AIML%' THEN 'AIML'
+                        WHEN sr.file_name LIKE '%IT%' AND sr.file_name NOT LIKE '%AR-IT%' THEN 'IT'
+                        WHEN sr.file_name LIKE '%AR-IT%' THEN 'IT'
+                        ELSE 'Unknown'
+                    END as department,
+                    sr.semester_info,
+                    sr.cgpa,
+                    sr.sgpa,
+                    sr.scr,
+                    sr.tcr,
+                    ss.overall_score as smart_score,
+                    ROW_NUMBER() OVER (PARTITION BY sr.roll_no ORDER BY sr.created_at DESC) as rn
+                FROM student_results sr
+                LEFT JOIN smartscore ss ON sr.roll_no = ss.roll_number
+                $cteWhereClause
+            )
+            SELECT roll_no, student_name, father_name, department,
+                    semester_info, cgpa, sgpa, scr, tcr, smart_score,
+                    (COALESCE(smart_score, 0) * $smartWeightFactor + CAST(cgpa AS DECIMAL(5,2)) * $cgpaWeightFactor) as weighted_score
+            FROM latest_entry
+            WHERE rn = 1
+            ORDER BY weighted_score DESC, student_name ASC
+            LIMIT 1000";
+    } else {
+        // CGPA-only ranking
+        $sql = "WITH latest_entry AS (
+                SELECT 
+                    sr.roll_no,
+                    sr.student_name,
+                    sr.father_name,
+                    CASE 
+                        WHEN sr.department IS NOT NULL AND sr.department != '' THEN sr.department
+                        WHEN sr.exam_info REGEXP '[A-Z]{2,}-' THEN SUBSTRING_INDEX(SUBSTRING_INDEX(sr.exam_info, ' ', -1), '-', 1)
+                        WHEN sr.file_name REGEXP '^(AIML|IT|CSE|ECE|EEE|MECH|CIVIL)' THEN REGEXP_SUBSTR(sr.file_name, '^(AIML|IT|CSE|ECE|EEE|MECH|CIVIL)')
+                        WHEN sr.file_name LIKE '%AIML%' THEN 'AIML'
+                        WHEN sr.file_name LIKE '%IT%' AND sr.file_name NOT LIKE '%AR-IT%' THEN 'IT'
+                        WHEN sr.file_name LIKE '%AR-IT%' THEN 'IT'
+                        ELSE 'Unknown'
+                    END as department,
+                    sr.semester_info,
+                    sr.cgpa,
+                    sr.sgpa,
+                    sr.scr,
+                    sr.tcr,
+                    ss.overall_score as smart_score,
+                    ROW_NUMBER() OVER (PARTITION BY sr.roll_no ORDER BY sr.created_at DESC) as rn
+                FROM student_results sr
+                LEFT JOIN smartscore ss ON sr.roll_no = ss.roll_number
+                $cteWhereClause
+            )
+            SELECT roll_no, student_name, father_name, department,
+                    semester_info, cgpa, sgpa, scr, tcr, smart_score
+            FROM latest_entry
+            WHERE rn = 1
+            ORDER BY CAST(cgpa AS DECIMAL(5,2)) DESC, student_name ASC
+            LIMIT 1000";
+    }
+
+    $stmt = $pdo->prepare($sql);
+    foreach ($cteParams as $k => $v) $stmt->bindValue($k, $v);
+    $stmt->execute();
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $rows = array_slice($rows, 0, $limit);
+
+    if ($downloadFormat === 'csv') {
+        header('Content-Type: text/csv');
+        $filename = $rankingType === 'weighted' ? 'weighted_leaderboard_' . date('Y-m-d') . '.csv' : 'cgpa_leaderboard_' . date('Y-m-d') . '.csv';
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        
+        $output = fopen('php://output', 'w');
+        if ($rankingType === 'weighted') {
+            fputcsv($output, ['Rank', 'Roll No', 'Name', 'CGPA', 'Smart Score', 'Weighted Score']);
+        } else {
+            fputcsv($output, ['Rank', 'Roll No', 'Name', 'CGPA', 'Smart Score']);
+        }
+        
+        foreach ($rows as $index => $row) {
+            if ($rankingType === 'weighted') {
+                fputcsv($output, [
+                    $index + 1,
+                    $row['roll_no'] ?? '',
+                    $row['student_name'] ?? '',
+                    $row['cgpa'] ?? '',
+                    $row['smart_score'] ?? '',
+                    number_format($row['weighted_score'] ?? 0, 2)
+                ]);
+            } else {
+                fputcsv($output, [
+                    $index + 1,
+                    $row['roll_no'] ?? '',
+                    $row['student_name'] ?? '',
+                    $row['cgpa'] ?? '',
+                    $row['smart_score'] ?? ''
+                ]);
+            }
+        }
+        
+        fclose($output);
+        exit;
+    }
+
+    if ($downloadFormat === 'excel') {
+        require_once 'vendor/autoload.php';
+        
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        
+        // Set headers
+        $sheet->setCellValue('A1', 'Rank');
+        $sheet->setCellValue('B1', 'Roll No');
+        $sheet->setCellValue('C1', 'Name');
+        $sheet->setCellValue('D1', 'CGPA');
+        $sheet->setCellValue('E1', 'Smart Score');
+        
+        if ($rankingType === 'weighted') {
+            $sheet->setCellValue('F1', 'Weighted Score');
+            $headerRange = 'A1:F1';
+        } else {
+            $headerRange = 'A1:E1';
+        }
+        
+        // Style header row
+        $headerStyle = $sheet->getStyle($headerRange);
+        $headerStyle->getFont()->setBold(true);
+        $headerStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
+        $headerStyle->getFill()->getStartColor()->setARGB('FF4472C4');
+        $headerStyle->getFont()->getColor()->setARGB('FFFFFFFF');
+        
+        // Add data
+        $row = 2;
+        foreach ($rows as $index => $data) {
+            $sheet->setCellValue('A' . $row, $index + 1);
+            $sheet->setCellValue('B' . $row, $data['roll_no'] ?? '');
+            $sheet->setCellValue('C' . $row, $data['student_name'] ?? '');
+            $sheet->setCellValue('D' . $row, $data['cgpa'] ?? '');
+            $sheet->setCellValue('E' . $row, $data['smart_score'] ?? '');
+            
+            if ($rankingType === 'weighted') {
+                $sheet->setCellValue('F' . $row, number_format($data['weighted_score'] ?? 0, 2));
+            }
+            $row++;
+        }
+        
+        // Auto-size columns
+        $maxCol = $rankingType === 'weighted' ? 'F' : 'E';
+        foreach (range('A', $maxCol) as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+        
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        $filename = $rankingType === 'weighted' ? 'weighted_leaderboard_' . date('Y-m-d') . '.xlsx' : 'cgpa_leaderboard_' . date('Y-m-d') . '.xlsx';
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        
+        $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
+        $writer->save('php://output');
+        exit;
+    }
+}
 
 $semesterInfo = trim($_GET['semester_info'] ?? '');
 $department   = trim($_GET['department']   ?? '');
 $search       = trim($_GET['search']       ?? '');
 $limit        = max(10, min(500, (int)($_GET['limit'] ?? 100)));
+$rankingType  = trim($_GET['ranking'] ?? 'cgpa');
+
+// Get custom weights for weighted ranking
+$smartWeight  = max(0, min(100, (int)($_GET['smart_weight'] ?? 60)));
+$cgpaWeight   = max(0, min(100, (int)($_GET['cgpa_weight'] ?? 40)));
+
+// Ensure weights sum to 100, if not normalize them
+$totalWeight = $smartWeight + $cgpaWeight;
+if ($totalWeight > 0 && $totalWeight !== 100) {
+    $smartWeight = round(($smartWeight / $totalWeight) * 100);
+    $cgpaWeight = 100 - $smartWeight;
+} elseif ($totalWeight === 0) {
+    $smartWeight = 60;
+    $cgpaWeight = 40;
+}
 
 /* ── Build WHERE clause for CTE ── */
 $cteWhere  = ["cgpa IS NOT NULL", "cgpa != ''", "cgpa != 'N/A'"];
@@ -27,7 +266,14 @@ if ($semesterInfo) {
     $cteParams[':sem'] = $semesterInfo;
 }
 if ($department) {
-    $cteWhere[] = "department = :dept";
+    $cteWhere[] = "(
+        department = :dept OR 
+        (department IS NULL OR department = '') AND (
+            exam_info REGEXP '[A-Z]{2,}-' AND SUBSTRING_INDEX(SUBSTRING_INDEX(exam_info, ' ', -1), '-', 1) = :dept OR
+            file_name REGEXP '^(AIML|IT|CSE|ECE|EEE|MECH|CIVIL)' AND REGEXP_SUBSTR(file_name, '^(AIML|IT|CSE|ECE|EEE|MECH|CIVIL)') = :dept OR
+            file_name LIKE CONCAT('%', :dept, '%')
+        )
+    )";
     $cteParams[':dept'] = $department;
 }
 if ($search) {
@@ -37,36 +283,78 @@ if ($search) {
 
 $cteWhereClause = 'WHERE '.implode(' AND ', $cteWhere);
 
-/* ── Fetch leaderboard with most recent semester CGPA ── */
-$sql = "WITH latest_semester AS (
-        SELECT 
-            roll_no,
-            student_name,
-            father_name,
-            department,
-            semester_info,
-            cgpa,
-            sgpa,
-            scr,
-            tcr,
-            ROW_NUMBER() OVER (PARTITION BY roll_no ORDER BY 
+/* ── Fetch leaderboard with most recent CGPA entry (by created_at) ── */
+if ($rankingType === 'weighted') {
+    // Weighted ranking with custom weights
+    $smartWeightFactor = $smartWeight / 100;
+    $cgpaWeightFactor = $cgpaWeight / 100;
+    
+    $sql = "WITH latest_entry AS (
+            SELECT 
+                sr.roll_no,
+                sr.student_name,
+                sr.father_name,
                 CASE 
-                    WHEN semester_info LIKE '%III Yr%' THEN 3
-                    WHEN semester_info LIKE '%II Yr%' THEN 2
-                    WHEN semester_info LIKE '%I Yr%' THEN 1
-                    ELSE 0
-                END DESC,
-                semester_info DESC
-            ) as rn
-        FROM student_results
-        $cteWhereClause
-    )
-    SELECT roll_no, student_name, father_name, department,
-            semester_info, cgpa, sgpa, scr, tcr
-    FROM latest_semester
-    WHERE rn = 1
-    ORDER BY CAST(cgpa AS DECIMAL(5,2)) DESC, student_name ASC
-    LIMIT 1000";
+                    WHEN sr.department IS NOT NULL AND sr.department != '' THEN sr.department
+                    WHEN sr.exam_info REGEXP '[A-Z]{2,}-' THEN SUBSTRING_INDEX(SUBSTRING_INDEX(sr.exam_info, ' ', -1), '-', 1)
+                    WHEN sr.file_name REGEXP '^(AIML|IT|CSE|ECE|EEE|MECH|CIVIL)' THEN REGEXP_SUBSTR(sr.file_name, '^(AIML|IT|CSE|ECE|EEE|MECH|CIVIL)')
+                    WHEN sr.file_name LIKE '%AIML%' THEN 'AIML'
+                    WHEN sr.file_name LIKE '%IT%' AND sr.file_name NOT LIKE '%AR-IT%' THEN 'IT'
+                    WHEN sr.file_name LIKE '%AR-IT%' THEN 'IT'
+                    ELSE 'Unknown'
+                END as department,
+                sr.semester_info,
+                sr.cgpa,
+                sr.sgpa,
+                sr.scr,
+                sr.tcr,
+                ss.overall_score as smart_score,
+                ROW_NUMBER() OVER (PARTITION BY sr.roll_no ORDER BY sr.created_at DESC) as rn
+            FROM student_results sr
+            LEFT JOIN smartscore ss ON sr.roll_no = ss.roll_number
+            $cteWhereClause
+        )
+        SELECT roll_no, student_name, father_name, department,
+                semester_info, cgpa, sgpa, scr, tcr, smart_score,
+                (COALESCE(smart_score, 0) * $smartWeightFactor + CAST(cgpa AS DECIMAL(5,2)) * $cgpaWeightFactor) as weighted_score
+        FROM latest_entry
+        WHERE rn = 1
+        ORDER BY weighted_score DESC, student_name ASC
+        LIMIT 1000";
+} else {
+    // CGPA-only ranking
+    $sql = "WITH latest_entry AS (
+            SELECT 
+                sr.roll_no,
+                sr.student_name,
+                sr.father_name,
+                CASE 
+                    WHEN sr.department IS NOT NULL AND sr.department != '' THEN sr.department
+                    WHEN sr.exam_info REGEXP '[A-Z]{2,}-' THEN SUBSTRING_INDEX(SUBSTRING_INDEX(sr.exam_info, ' ', -1), '-', 1)
+                    WHEN sr.file_name REGEXP '^(AIML|IT|CSE|ECE|EEE|MECH|CIVIL)' THEN REGEXP_SUBSTR(sr.file_name, '^(AIML|IT|CSE|ECE|EEE|MECH|CIVIL)')
+                    WHEN sr.file_name LIKE '%AIML%' THEN 'AIML'
+                    WHEN sr.file_name LIKE '%IT%' AND sr.file_name NOT LIKE '%AR-IT%' THEN 'IT'
+                    WHEN sr.file_name LIKE '%AR-IT%' THEN 'IT'
+                    ELSE 'Unknown'
+                END as department,
+                sr.semester_info,
+                sr.cgpa,
+                sr.sgpa,
+                sr.scr,
+                sr.tcr,
+                ss.overall_score as smart_score,
+                ROW_NUMBER() OVER (PARTITION BY sr.roll_no ORDER BY sr.created_at DESC) as rn
+            FROM student_results sr
+            LEFT JOIN smartscore ss ON sr.roll_no = ss.roll_number
+            $cteWhereClause
+        )
+        SELECT roll_no, student_name, father_name, department,
+                semester_info, cgpa, sgpa, scr, tcr, smart_score
+        FROM latest_entry
+        WHERE rn = 1
+        ORDER BY CAST(cgpa AS DECIMAL(5,2)) DESC, student_name ASC
+        LIMIT 1000";
+}
 
 $stmt = $pdo->prepare($sql);
 foreach ($cteParams as $k => $v) $stmt->bindValue($k, $v);
@@ -83,10 +371,21 @@ $semesters = $pdo->query(
      ORDER BY semester_info"
 )->fetchAll(PDO::FETCH_COLUMN);
 
+// Extract departments from exam_info and file_name since department column is empty
 $departments = $pdo->query(
-    "SELECT DISTINCT department FROM student_results
-     WHERE department IS NOT NULL AND department != ''
-     ORDER BY department"
+    "SELECT DISTINCT 
+        CASE 
+            WHEN department IS NOT NULL AND department != '' THEN department
+            WHEN exam_info REGEXP '[A-Z]{2,}-' THEN SUBSTRING_INDEX(SUBSTRING_INDEX(exam_info, ' ', -1), '-', 1)
+            WHEN file_name REGEXP '^(AIML|IT|CSE|ECE|EEE|MECH|CIVIL)' THEN REGEXP_SUBSTR(file_name, '^(AIML|IT|CSE|ECE|EEE|MECH|CIVIL)')
+            WHEN file_name LIKE '%AIML%' THEN 'AIML'
+            WHEN file_name LIKE '%IT%' AND file_name NOT LIKE '%AR-IT%' THEN 'IT'
+            WHEN file_name LIKE '%AR-IT%' THEN 'IT'
+            ELSE 'Unknown'
+        END as dept
+     FROM student_results
+     WHERE cgpa IS NOT NULL AND cgpa != '' AND cgpa != 'N/A'
+     ORDER BY dept"
 )->fetchAll(PDO::FETCH_COLUMN);
 
 /* ── Stats ── */
@@ -469,8 +768,38 @@ function cgpaCls(float $v): string {
         <?php endif; ?>
 
         <div class="filters">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0 text-white"><i class="fas fa-filter me-2"></i>Filters</h5>
+                <div class="download-buttons">
+                    <button onclick="downloadLeaderboard('csv')" class="btn btn-success btn-sm">
+                        <i class="fas fa-file-csv me-1"></i>Download CSV
+                    </button>
+                    <button onclick="downloadLeaderboard('excel')" class="btn btn-success btn-sm">
+                        <i class="fas fa-file-excel me-1"></i>Download Excel
+                    </button>
+                </div>
+            </div>
             <form method="GET" class="row g-3">
-                <div class="col-md-3">
+                <div class="col-md-2">
+                    <label class="form-label text-muted">Ranking Type</label>
+                    <select name="ranking" class="form-select bg-dark text-white border-secondary" id="rankingTypeSelect">
+                        <option value="cgpa" <?php echo $rankingType === 'cgpa' ? 'selected' : ''; ?>>CGPA Only</option>
+                        <option value="weighted" <?php echo $rankingType === 'weighted' ? 'selected' : ''; ?>>Weighted</option>
+                    </select>
+                </div>
+                <div class="col-md-4" id="weightFields" style="<?php echo $rankingType !== 'weighted' ? 'display:none;' : ''; ?>">
+                    <label class="form-label text-muted">Weight Distribution</label>
+                    <div class="input-group">
+                        <input type="number" name="smart_weight" class="form-control bg-dark text-white border-secondary" 
+                               value="<?php echo esc($_GET['smart_weight'] ?? 60); ?>" min="0" max="100" step="5" placeholder="Smart %">
+                        <span class="input-group-text bg-dark text-white border-secondary">Smart</span>
+                        <input type="number" name="cgpa_weight" class="form-control bg-dark text-white border-secondary" 
+                               value="<?php echo esc($_GET['cgpa_weight'] ?? 40); ?>" min="0" max="100" step="5" placeholder="CGPA %">
+                        <span class="input-group-text bg-dark text-white border-secondary">CGPA</span>
+                    </div>
+                    <small class="text-muted" style="font-size: 11px;">Weights must sum to 100%</small>
+                </div>
+                <div class="col-md-2">
                     <label class="form-label text-muted">Semester</label>
                     <select name="semester_info" class="form-select bg-dark text-white border-secondary">
                         <option value="">All Semesters</option>
@@ -479,7 +808,7 @@ function cgpaCls(float $v): string {
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="form-label text-muted">Department</label>
                     <select name="department" class="form-select bg-dark text-white border-secondary">
                         <option value="">All Departments</option>
@@ -488,11 +817,11 @@ function cgpaCls(float $v): string {
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="form-label text-muted">Search</label>
                     <input type="text" name="search" class="form-control bg-dark text-white border-secondary" placeholder="Name or Roll No" value="<?php echo esc($search); ?>">
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="form-label text-muted">Limit</label>
                     <select name="limit" class="form-select bg-dark text-white border-secondary">
                         <option value="10" <?php echo $limit === 10 ? 'selected' : ''; ?>>10</option>
@@ -502,8 +831,8 @@ function cgpaCls(float $v): string {
                         <option value="250" <?php echo $limit === 250 ? 'selected' : ''; ?>>250</option>
                     </select>
                 </div>
-                <div class="col-12">
-                    <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+                <div class="col-md-12 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary">Apply Filters</button>
                 </div>
             </form>
         </div>
@@ -524,6 +853,10 @@ function cgpaCls(float $v): string {
                         <th class="hide-mobile">Department</th>
                         <th class="hide-mobile">Semester</th>
                         <th>CGPA</th>
+                        <th>Smart Score</th>
+                        <?php if ($rankingType === 'weighted'): ?>
+                        <th>Weighted Score</th>
+                        <?php endif; ?>
                         <th class="hide-mobile">SGPA</th>
                         <th class="hide-mobile">Credits</th>
                     </tr>
@@ -547,6 +880,21 @@ function cgpaCls(float $v): string {
                                 <?php echo number_format((float)($row['cgpa'] ?? 0), 2); ?>
                             </span>
                         </td>
+                        <td>
+                            <span class="font-mono">
+                                <?php echo ($row['smart_score'] !== null && $row['smart_score'] !== '') ? number_format((float)$row['smart_score'], 2) : '-'; ?>
+                            </span>
+                        </td>
+                        <?php if ($rankingType === 'weighted'): ?>
+                        <td>
+                            <span class="font-mono fw-bold" style="color: var(--accent);">
+                                <?php echo number_format((float)($row['weighted_score'] ?? 0), 2); ?>
+                            </span>
+                        </td>
+                        <td class="hide-mobile">
+                            <small class="text-muted"><?php echo $smartWeight; ?>% Smart / <?php echo $cgpaWeight; ?>% CGPA</small>
+                        </td>
+                        <?php endif; ?>
                         <td class="hide-mobile">
                             <span class="font-mono">
                                 <?php echo ($row['sgpa'] !== null && $row['sgpa'] !== '') ? number_format((float)$row['sgpa'], 2) : '-'; ?>
@@ -572,5 +920,31 @@ function cgpaCls(float $v): string {
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    function downloadLeaderboard(format) {
+        // Get current filter values
+        const urlParams = new URLSearchParams(window.location.search);
+        urlParams.set('download', format);
+        
+        // Open download URL
+        window.location.href = 'leaderboard.php?' + urlParams.toString();
+    }
+
+    // Toggle weight fields based on ranking type
+    document.addEventListener('DOMContentLoaded', function() {
+        const rankingSelect = document.getElementById('rankingTypeSelect');
+        const weightFields = document.getElementById('weightFields');
+
+        if (rankingSelect && weightFields) {
+            rankingSelect.addEventListener('change', function() {
+                if (this.value === 'weighted') {
+                    weightFields.style.display = 'block';
+                } else {
+                    weightFields.style.display = 'none';
+                }
+            });
+        }
+    });
+    </script>
 </body>
 </html>

@@ -77,10 +77,67 @@ A web-based system for managing and searching student information, including att
 
 ## Installation & Setup
 
+### Traditional Setup (XAMPP/Local Server)
+
 1. Place project files in web server root (e.g., `htdocs/studentdetails/`)
 2. Import `database.sql` to create the database schema
 3. Configure database connection in `config.php`
 4. Ensure proper permissions for file uploads if needed
+
+### Docker Setup
+
+#### Prerequisites
+- Docker Desktop installed and running
+- Docker Compose installed
+
+#### Quick Start
+
+1. Clone or navigate to the project directory
+2. Run the following command to build and start the containers:
+   ```bash
+   docker-compose up -d
+   ```
+
+3. Access the application at: `http://localhost:8080`
+4. Access phpMyAdmin at: `http://localhost:8081`
+   - Username: `root`
+   - Password: ``
+
+#### Docker Services
+
+The `docker-compose.yml` file includes three services:
+
+- **web**: PHP 8.2 with Apache (port 8080)
+- **mysql**: MySQL 8.0 database (port 3306)
+- **phpmyadmin**: Database management interface (port 8081)
+
+#### Environment Variables
+
+The application uses environment variables for database configuration in Docker. These are defined in `docker-compose.yml`:
+
+- `DB_HOST=mysql`
+- `DB_NAME=student_details_db`
+- `DB_USER=root`
+- `DB_PASS=` (empty password)
+
+The `config.php` file automatically detects Docker environment variables and falls back to local defaults when not in Docker.
+
+#### Database Initialization
+
+Place your SQL initialization scripts in the `database/` directory. They will be automatically executed when the MySQL container starts for the first time.
+
+#### Useful Docker Commands
+
+- **Stop containers**: `docker-compose down`
+- **View logs**: `docker-compose logs -f`
+- **Restart containers**: `docker-compose restart`
+- **Rebuild containers**: `docker-compose up -d --build`
+- **Access web container shell**: `docker exec -it studentdetails_web /bin/bash`
+- **Access MySQL container shell**: `docker exec -it studentdetails_mysql /bin/bash`
+
+#### Data Persistence
+
+MySQL data is persisted in a Docker volume named `mysql_data`. This ensures your database data survives container restarts and recreations.
 
 ## Usage
 
@@ -102,4 +159,4 @@ A web-based system for managing and searching student information, including att
 
 ---
 
-**Designed and Developed by JUK**
+

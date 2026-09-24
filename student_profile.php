@@ -345,10 +345,7 @@ $prefilledRollNumber = isset($_GET['roll']) ? htmlspecialchars($_GET['roll']) : 
                 e.preventDefault();
                 const rollNumberInput = document.getElementById('rollNumber');
                 const rollNumber = rollNumberInput ? rollNumberInput.value.trim() : '';
-                
-                console.log('Roll number input element:', rollNumberInput);
-                console.log('Roll number entered:', rollNumber);
-                
+
                 if (!rollNumber) {
                     showAlert('Please enter your roll number');
                     return;
@@ -356,7 +353,6 @@ $prefilledRollNumber = isset($_GET['roll']) ? htmlspecialchars($_GET['roll']) : 
 
                 // Get CSRF token
                 const csrfToken = await getCsrfToken();
-                console.log('CSRF token:', csrfToken);
 
                 showLoading(true, 'Sending OTP...');
 
@@ -368,7 +364,6 @@ $prefilledRollNumber = isset($_GET['roll']) ? htmlspecialchars($_GET['roll']) : 
                     });
 
                     const data = await response.json();
-                    console.log('Response:', data);
 
                     if (data.success) {
                         document.getElementById('step1').style.display = 'none';

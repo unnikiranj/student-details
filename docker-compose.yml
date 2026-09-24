@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: studentdetails_web
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html
+      - ./uploads:/var/www/html/uploads
+    environment:
+      - DB_HOST=mysql
+      - DB_NAME=student_details_db
+      - DB_USER=student_user
+      - DB_PASS=student_password
+    depends_on:
+      - mysql
+    networks:
+      - studentdetails_network
+
+  mysql:
+    image: mysql:8.0
+    container_name: studentdetails_mysql
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_DATABASE: student_details_db
+      MYSQL_USER: student_user
+      MYSQL_PASSWORD: student_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - studentdetails_network
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: studentdetails_phpmyadmin
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: student_user
+      PMA_PASSWORD: student_password
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - studentdetails_network
+
+volumes:
+  mysql_data:
+
+networks:
+  studentdetails_network:
+    driver: bridge

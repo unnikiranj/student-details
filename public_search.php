@@ -258,8 +258,8 @@ function groupAttendanceData(array $summaryRows, array $subjectRows): array
         $groups[$key]['subjects'][] = $row;
     }
 
-    /* Sort: academic_year → year → semester → month */
-    uasort($groups, fn($a, $b) => strcmp($a['raw_key'], $b['raw_key']));
+    /* Sort: academic_year → year → semester → month (descending for latest first) */
+    uasort($groups, fn($a, $b) => strcmp($b['raw_key'], $a['raw_key']));
 
     return array_values($groups);
 }
@@ -325,6 +325,16 @@ try {
             $stmt->execute($rollParams);
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
             if ($row && !empty($row['roll_no'])) return [$row]; // Return single match for exact roll number
+        } catch (Throwable $e) { /* keep searching */ }
+
+        // Try roll number in attendance tables (for students with only attendance data)
+        try {
+            $stmt = $pdo->prepare('SELECT DISTINCT roll_no FROM attendance_summary WHERE roll_no IN (?,?,?) LIMIT 1');
+            $stmt->execute($rollParams);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($row && !empty($row['roll_no'])) {
+                return [['roll_no' => $row['roll_no'], 'student_name' => 'Student']]; // Return match with placeholder name
+            }
         } catch (Throwable $e) { /* keep searching */ }
 
         // For name searches, return all matches
@@ -494,6 +504,37 @@ try {
         $stmt->execute($rp);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
         if ($rows) $response['data']['tables']['subject_results'] = $rows;
+
+        // Fetch course names and credits from course_codes table for subject results
+        if ($rows) {
+            $uniqueSubjects = [];
+            foreach ($rows as $row) {
+                $code = strtoupper($row['subject_code'] ?? '');
+                if ($code) $uniqueSubjects[$code] = $code;
+            }
+
+            if (!empty($uniqueSubjects)) {
+                $placeholders = str_repeat('?,', count($uniqueSubjects) - 1) . '?';
+                $stmt = $pdo->prepare(
+                    "SELECT course_code, course_name, credits
+                     FROM course_codes
+                     WHERE course_code IN ($placeholders)"
+                );
+                $stmt->execute(array_values($uniqueSubjects));
+                $courseCodesData = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                // Build mapping: course_code -> {course_name, credits}
+                $courseInfoMap = [];
+                foreach ($courseCodesData as $row) {
+                    $code = strtoupper($row['course_code'] ?? '');
+                    $courseInfoMap[$code] = [
+                        'course_name' => $row['course_name'] ?? '',
+                        'credits' => $row['credits'] ?? null
+                    ];
+                }
+                $response['data']['subject_results_course_info'] = $courseInfoMap;
+            }
+        }
     } catch (PDOException $e) { error_log('subject_results: '.$e->getMessage()); }
 
     /* ── 3. Attendance summary ───────────────────── */
@@ -647,6 +688,38 @@ try {
         if ($rows) $response['data']['attendance_uploads'] = $rows;
     } catch (PDOException $e) { error_log('attendance_uploads: '.$e->getMessage()); }
 
+    /* ── 4c. Fetch credits and course names from course_codes table ───────────────────── */
+    try {
+        // Get unique subject codes from attendance_subjects
+        $uniqueSubjects = [];
+        foreach ($subjectRows as $row) {
+            $code = strtoupper($row['subject_code'] ?? '');
+            if ($code) $uniqueSubjects[$code] = $code;
+        }
+        
+        if (!empty($uniqueSubjects)) {
+            $placeholders = str_repeat('?,', count($uniqueSubjects) - 1) . '?';
+            $stmt = $pdo->prepare(
+                "SELECT course_code, course_name, credits, semester, year, branch
+                 FROM course_codes
+                 WHERE course_code IN ($placeholders)"
+            );
+            $stmt->execute(array_values($uniqueSubjects));
+            $courseCodesData = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Build mapping: course_code -> {course_name, credits}
+            $courseInfoMap = [];
+            foreach ($courseCodesData as $row) {
+                $code = strtoupper($row['course_code'] ?? '');
+                $courseInfoMap[$code] = [
+                    'course_name' => $row['course_name'] ?? '',
+                    'credits' => $row['credits'] ?? null
+                ];
+            }
+            $response['data']['course_info'] = $courseInfoMap;
+        }
+    } catch (PDOException $e) { error_log('course_codes: '.$e->getMessage()); }
+
     /* ── 5. Mid marks ────────────────────────────── */
     try {
         $desc     = $pdo->query('DESCRIBE `midmarks_subject_marks`')->fetchAll(PDO::FETCH_ASSOC);
@@ -731,38 +804,16 @@ try {
         }
     } catch (PDOException $e) { error_log('job_offers: '.$e->getMessage()); }
 
-    /* ── 8. Test Assessment Results ───────────────── */
+    /* ── 8. CGPA Rankings ─────────────────────────── */
     try {
-        $stmt = $pdo->prepare(
-            'SELECT * FROM test_assessment_results WHERE college_roll_number IN (?,?,?) ORDER BY test_date DESC, created_at DESC'
-        );
-        $stmt->execute($rp);
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        if ($rows) $response['data']['tables']['test_assessment_results'] = $rows;
-    } catch (PDOException $e) { error_log('test_assessment_results: '.$e->getMessage()); }
-
-    /* ── 9. CGPA Rankings ─────────────────────────── */
-    try {
-        // Get student's CGPA from latest semester (same logic as leaderboard)
-        $latestSemesterQuery = "WITH latest_semester AS (
-                                 SELECT
-                                   roll_no, student_name, cgpa, sgpa, semester_info,
-                                   ROW_NUMBER() OVER (PARTITION BY roll_no ORDER BY
-                                     CASE
-                                       WHEN semester_info LIKE '%III Yr%' THEN 3
-                                       WHEN semester_info LIKE '%II Yr%'  THEN 2
-                                       WHEN semester_info LIKE '%I Yr%'   THEN 1
-                                       ELSE 0
-                                     END DESC,
-                                     semester_info DESC
-                                   ) as rn
-                                 FROM student_results
-                                 WHERE cgpa IS NOT NULL AND cgpa != '' AND cgpa != 'N/A'
-                               )
-                               SELECT roll_no, student_name, cgpa, sgpa, semester_info
-                               FROM latest_semester
-                               WHERE rn = 1 AND roll_no IN (?,?,?)";
-        $stmt = $pdo->prepare($latestSemesterQuery);
+        // Get student's CGPA from latest entry (by created_at) to ensure cleared backlog CGPA is used
+        $latestCGPAQuery = "SELECT roll_no, student_name, cgpa, sgpa, semester_info, exam_info
+                           FROM student_results
+                           WHERE roll_no IN (?,?,?) 
+                             AND cgpa IS NOT NULL AND cgpa != '' AND cgpa != 'N/A'
+                           ORDER BY created_at DESC
+                           LIMIT 1";
+        $stmt = $pdo->prepare($latestCGPAQuery);
         $stmt->execute($rp);
         $studentResult = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -849,6 +900,22 @@ try {
         }
     } catch (PDOException $e) { error_log('cgpa_rank: '.$e->getMessage()); }
 
+    /* ── 9. Smart Score ─────────────────────────── */
+    try {
+        $rollNo = $rp[0];
+        $smartScoreStmt = $pdo->prepare("SELECT rank, global_rank, overall_score FROM smartscore WHERE roll_number = ?");
+        $smartScoreStmt->execute([$rollNo]);
+        $smartScoreData = $smartScoreStmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($smartScoreData) {
+            $response['data']['smart_score'] = [
+                'rank' => $smartScoreData['rank'],
+                'global_rank' => $smartScoreData['global_rank'],
+                'overall_score' => floatval($smartScoreData['overall_score'])
+            ];
+        }
+    } catch (PDOException $e) { error_log('smart_score: '.$e->getMessage()); }
+
     /* ── 10. Ranking List (for modal) ───────────────── */
     $rankingType = $_GET['ranking_type'] ?? '';
     if ($rankingType === 'overall' || $rankingType === 'semester') {
@@ -877,15 +944,19 @@ try {
                 $stmt = $pdo->query($rankingQuery);
                 $rankingList = $stmt->fetchAll(PDO::FETCH_ASSOC);
             } else {
-                // Get semester-wise ranking list (use the same semester as the current student)
+                // Get semester-wise ranking list (use the same semester and academic year as the current student)
                 $semesterInfo = $studentResult['semester_info'] ?? '';
+                // Get the specific exam info from the student's result to filter by exact semester+year
+                $examInfo = $studentResult['exam_info'] ?? '';
+                
                 if ($semesterInfo) {
+                    // Filter by both semester_info and exam_info to get exact semester ranking
                     $rankingQuery = "SELECT roll_no as college_roll_number, student_name as full_name, cgpa, sgpa
                                     FROM student_results
-                                    WHERE semester_info = ? AND cgpa IS NOT NULL AND cgpa != '' AND cgpa != 'N/A'
+                                    WHERE semester_info = ? AND exam_info = ? AND cgpa IS NOT NULL AND cgpa != '' AND cgpa != 'N/A'
                                     ORDER BY CAST(cgpa AS DECIMAL(5,2)) DESC";
                     $stmt = $pdo->prepare($rankingQuery);
-                    $stmt->execute([$semesterInfo]);
+                    $stmt->execute([$semesterInfo, $examInfo]);
                     $rankingList = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 } else {
                     $rankingList = [];

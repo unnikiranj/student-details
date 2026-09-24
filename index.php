@@ -27,6 +27,7 @@ header('Expires: Thu, 19 Nov 1981 08:52:00 GMT');
 
 <link href="assets/css/index.css?v=<?= filemtime(__DIR__ . '/assets/css/index.css') ?>" rel="stylesheet">
 <link href="assets/css/mobile-animations.css?v=<?= filemtime(__DIR__ . '/assets/css/mobile-animations.css') ?>" rel="stylesheet">
+<link href="assets/css/mascot.css?v=<?= filemtime(__DIR__ . '/assets/css/mascot.css') ?>" rel="stylesheet">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -176,10 +177,10 @@ header('Expires: Thu, 19 Nov 1981 08:52:00 GMT');
 <!-- Load JavaScript files in dependency order (traditional scripts for maximum compatibility) -->
 <script src="assets/js/utils.js?v=<?= filemtime(__DIR__ . '/assets/js/utils.js') ?>"></script>
 <script src="assets/js/filters.js?v=<?= filemtime(__DIR__ . '/assets/js/filters.js') ?>"></script>
-<script src="assets/js/reports.js?v=<?= filemtime(__DIR__ . '/assets/js/reports.js') ?>"></script>
 <script src="assets/js/search.js?v=<?= filemtime(__DIR__ . '/assets/js/search.js') ?>"></script>
 <script src="assets/js/index.js?v=<?= filemtime(__DIR__ . '/assets/js/index.js') ?>"></script>
 <script src="assets/js/attendance-animations.js?v=<?= filemtime(__DIR__ . '/assets/js/attendance-animations.js') ?>"></script>
+<script src="assets/js/mascot.js?v=<?= filemtime(__DIR__ . '/assets/js/mascot.js') ?>"></script>
 
 <script>
 function showPrivacyPolicy() {

@@ -23,6 +23,8 @@ require_once 'config.php';
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <style>
         :root {
             --ink: #0d1117;
@@ -429,28 +431,48 @@ require_once 'config.php';
 </head>
 <body>
     <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(135deg, var(--accent), var(--accent-dark)); box-shadow: var(--shadow);">
-        <div class="container-fluid">
-            <button class="navbar-toggler d-md-none me-2" type="button" onclick="toggleSidebar()">
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%); box-shadow: 0 4px 20px rgba(0,0,0,0.15); border-bottom: 1px solid rgba(255,255,255,0.1);">
+        <div class="container-fluid px-3 px-lg-4">
+            <button class="navbar-toggler d-md-none me-2 border-0" type="button" onclick="toggleSidebar()">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <a class="navbar-brand" href="#">
-                <i class="fas fa-graduation-cap me-2"></i>
-                Student Management System
+            <a class="navbar-brand d-flex align-items-center gap-2" href="#">
+                <div style="width:34px; height:34px; border-radius:10px; background:linear-gradient(135deg,#6366f1,#06b6d4); display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(99,102,241,0.4);">
+                    <i class="fas fa-graduation-cap text-white" style="font-size:16px;"></i>
+                </div>
+                <div>
+                    <div style="font-weight:800; font-size:16px; letter-spacing:-0.3px; line-height:1.2;">PVPSIT <span style="color:#38bdf8;">Admin</span></div>
+                    <div style="font-size:10.5px; opacity:0.75; font-weight:500; letter-spacing:0.2px;">Student Details Management Portal</div>
+                </div>
             </a>
-            <button class="navbar-toggler d-none d-md-block" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+
+            <!-- Live Digital Clock / Date -->
+            <div class="d-none d-lg-flex align-items-center gap-2 ms-4 px-3 py-1 rounded-pill" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:#e2e8f0; font-size:12px; font-family:'JetBrains Mono',monospace;">
+                <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:#10b981; box-shadow:0 0 8px #10b981;"></span>
+                <span id="dashboardLiveTime">--:--:--</span>
+                <span style="opacity:0.5;">|</span>
+                <span id="dashboardLiveDate">---</span>
+            </div>
+
+            <button class="navbar-toggler d-none d-md-block border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
+
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav ms-auto align-items-center gap-2">
                     <li class="nav-item">
-                        <a class="nav-link" href="#" onclick="openChangePassword()">
-                            <i class="fas fa-key me-1"></i>Change Password
+                        <a class="btn btn-sm btn-outline-light rounded-pill px-3 py-1" href="index.php" target="_blank" style="font-size:12.5px; font-weight:600; border-color:rgba(255,255,255,0.3);">
+                            <i class="fas fa-globe me-1 text-info"></i>View Public Portal
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#" onclick="logout()">
-                            <i class="fas fa-sign-out-alt me-1"></i>Logout
+                        <a class="nav-link py-1 px-3 rounded-pill" href="#" onclick="openChangePassword()" style="font-size:12.5px; color:#e2e8f0; background:rgba(255,255,255,0.06);">
+                            <i class="fas fa-key me-1 text-warning"></i>Change Password
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link py-1 px-3 rounded-pill" href="#" onclick="logout()" style="font-size:12.5px; color:#fecaca; background:rgba(239,68,68,0.15);">
+                            <i class="fas fa-sign-out-alt me-1 text-danger"></i>Logout
                         </a>
                     </li>
                 </ul>
@@ -462,30 +484,51 @@ require_once 'config.php';
         <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
         <div class="row">
             <!-- Sidebar -->
-            <nav class="col-md-2 d-none d-md-block sidebar" id="sidebar">
-                <div class="sidebar-sticky pt-3">
-                    <ul class="nav flex-column">
+            <nav class="col-md-2 d-none d-md-block sidebar" id="sidebar" style="background:linear-gradient(180deg, #0b0f19 0%, #0f172a 100%); border-right:1px solid rgba(255,255,255,0.08);">
+                <div class="sidebar-sticky pt-3 d-flex flex-column" style="min-height:calc(100vh - 70px);">
+                    <div class="px-3 mb-3 pb-2 border-bottom border-secondary border-opacity-25">
+                        <div class="text-uppercase small fw-bold" style="color:#64748b; font-size:11px; letter-spacing:0.8px;">Navigation</div>
+                    </div>
+                    <ul class="nav flex-column flex-grow-1">
                         <li class="nav-item">
                             <a class="nav-link active" href="#search" onclick="showSection('search')">
-                                <i class="fas fa-search me-2"></i>Search Students
+                                <i class="fas fa-search me-2 text-info"></i>Search Students
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="#upload" onclick="showSection('upload')">
-                                <i class="fas fa-upload me-2"></i>Upload Data
+                                <i class="fas fa-cloud-arrow-up me-2 text-primary"></i>Upload Data Center
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="#reports" onclick="showSection('reports')">
-                                <i class="fas fa-chart-bar me-2"></i>Reports
+                                <i class="fas fa-chart-pie me-2 text-success"></i>Reports & Analytics
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="#enrollments" onclick="showSection('enrollments')">
-                                <i class="fas fa-user-graduate me-2"></i>Course Enrollments
+                                <i class="fas fa-user-graduate me-2 text-warning"></i>Course Enrollments
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#users" onclick="showSection('users')">
+                                <i class="fas fa-users-gear me-2 text-danger"></i>User Management
                             </a>
                         </li>
                     </ul>
+
+                    <!-- Sidebar Footer Info -->
+                    <div class="p-3 mt-auto border-top border-secondary border-opacity-25">
+                        <div class="d-flex align-items-center gap-2">
+                            <div style="width:28px; height:28px; border-radius:50%; background:#1e293b; display:flex; align-items:center; justify-content:center; color:#38bdf8; font-size:11px;">
+                                <i class="fas fa-shield"></i>
+                            </div>
+                            <div>
+                                <div style="font-size:11.5px; font-weight:700; color:#f1f5f9;">Authenticated User</div>
+                                <div style="font-size:10px; color:#94a3b8; font-family:'JetBrains Mono',monospace;">Admin Session Active</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </nav>
 
@@ -494,22 +537,92 @@ require_once 'config.php';
                 <!-- Student Search Section -->
                 <div id="search-section" class="section">
                     <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h2><i class="fas fa-search me-2"></i>Student Search</h2>
+                        <div>
+                            <h2 class="mb-1 fw-bold" style="font-size:24px; color:#0f172a; letter-spacing:-0.5px;">
+                                <i class="fas fa-magnifying-glass me-2 text-primary"></i>Student Command Center
+                            </h2>
+                            <p class="text-muted small mb-0">Search any student record, inspect live attendance, mid marks breakdown, and profile data.</p>
+                        </div>
                     </div>
 
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="rollNumber" class="form-label">Roll Number</label>
-                                    <input type="text" class="form-control" id="rollNumber" placeholder="Enter roll number">
+                    <!-- Executive Overview Cards -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-3">
+                            <div class="card p-3 border-0 shadow-sm" style="background:linear-gradient(135deg,#eef2ff,#e0e7ff); border-radius:16px;">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <div class="text-uppercase small fw-bold text-primary" style="font-size:11px;">Quick Search</div>
+                                        <div class="fw-bold fs-5 text-dark">Student Profiles</div>
+                                    </div>
+                                    <div style="width:42px; height:42px; border-radius:12px; background:#4f46e5; color:#fff; display:flex; align-items:center; justify-content:center; font-size:18px;">
+                                        <i class="fas fa-user-graduate"></i>
+                                    </div>
                                 </div>
-                                <div class="col-md-6 d-flex align-items-end">
-                                    <button class="btn btn-primary me-2" onclick="searchStudent()">
-                                        <i class="fas fa-search me-1"></i>Search
+                            </div>
+                        </div>
+
+                        <div class="col-md-3" style="cursor:pointer;" onclick="showSection('upload')">
+                            <div class="card p-3 border-0 shadow-sm" style="background:linear-gradient(135deg,#ecfeff,#cffafe); border-radius:16px;">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <div class="text-uppercase small fw-bold text-info" style="font-size:11px;">Upload Center</div>
+                                        <div class="fw-bold fs-5 text-dark">Excel & CSV</div>
+                                    </div>
+                                    <div style="width:42px; height:42px; border-radius:12px; background:#0891b2; color:#fff; display:flex; align-items:center; justify-content:center; font-size:18px;">
+                                        <i class="fas fa-cloud-arrow-up"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3" style="cursor:pointer;" onclick="showSection('enrollments')">
+                            <div class="card p-3 border-0 shadow-sm" style="background:linear-gradient(135deg,#ecfdf5,#d1fae5); border-radius:16px;">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <div class="text-uppercase small fw-bold text-success" style="font-size:11px;">Enrollments</div>
+                                        <div class="fw-bold fs-5 text-dark">Course Catalog</div>
+                                    </div>
+                                    <div style="width:42px; height:42px; border-radius:12px; background:#059669; color:#fff; display:flex; align-items:center; justify-content:center; font-size:18px;">
+                                        <i class="fas fa-book-open"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3">
+                            <div class="card p-3 border-0 shadow-sm" style="background:linear-gradient(135deg,#fff7ed,#ffedd5); border-radius:16px;">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <div class="text-uppercase small fw-bold text-warning" style="font-size:11px;">System Health</div>
+                                        <div class="fw-bold fs-5 text-dark">Online & Ready</div>
+                                    </div>
+                                    <div style="width:42px; height:42px; border-radius:12px; background:#ea580c; color:#fff; display:flex; align-items:center; justify-content:center; font-size:18px;">
+                                        <i class="fas fa-server"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Search Box Card -->
+                    <div class="card border-0 shadow-sm mb-4" style="border-radius:18px; overflow:hidden;">
+                        <div class="card-body p-4">
+                            <div class="row g-3 align-items-end">
+                                <div class="col-md-8">
+                                    <label for="rollNumber" class="form-label fw-bold small text-muted">ENTER ROLL NUMBER</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0" style="border-radius:12px 0 0 12px;">
+                                            <i class="fas fa-id-card text-muted"></i>
+                                        </span>
+                                        <input type="text" class="form-control border-start-0 py-2 font-mono" id="rollNumber" placeholder="e.g. 21501A0501 or 22501A1267" style="border-radius:0 12px 12px 0; font-size:15px; font-weight:600;">
+                                    </div>
+                                </div>
+                                <div class="col-md-4 d-flex gap-2">
+                                    <button class="btn btn-primary px-4 py-2 flex-grow-1" onclick="searchStudent()" style="border-radius:12px; font-weight:700; background:linear-gradient(135deg,#4f46e5,#4338ca); border:none; box-shadow:0 4px 12px rgba(79,70,229,0.35);">
+                                        <i class="fas fa-search me-1"></i>Search Student
                                     </button>
-                                    <button class="btn btn-secondary" onclick="clearSearch()">
-                                        <i class="fas fa-times me-1"></i>Clear
+                                    <button class="btn btn-light px-3 py-2" onclick="clearSearch()" style="border-radius:12px; font-weight:600;" title="Clear">
+                                        <i class="fas fa-times"></i>
                                     </button>
                                 </div>
                             </div>
@@ -518,11 +631,12 @@ require_once 'config.php';
 
                     <!-- Search Results -->
                     <div id="searchResults" class="mt-4" style="display: none;">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5 class="mb-0">Student Details</h5>
+                        <div class="card border-0 shadow-sm" style="border-radius:18px; overflow:hidden;">
+                            <div class="card-header bg-white py-3 px-4 border-bottom d-flex align-items-center justify-content-between">
+                                <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-user-graduate me-2 text-primary"></i>Student Verification Details</h5>
+                                <span class="badge bg-success-subtle text-success fw-bold px-3 py-2 rounded-pill"><i class="fas fa-circle-check me-1"></i>Record Found</span>
                             </div>
-                            <div class="card-body search-result">
+                            <div class="card-body search-result p-4">
                                 <div id="studentInfo"></div>
                             </div>
                         </div>
@@ -531,174 +645,12 @@ require_once 'config.php';
 
                 <!-- Upload Section -->
                 <div id="upload-section" class="section" style="display: none;">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h2><i class="fas fa-upload me-2"></i>Data Upload</h2>
-                    </div>
-
-                    <div class="upload-section">
-                        <div class="row">
-                            <!-- Attendance Upload -->
-                            <div class="col-md-6">
-                                <div class="card">
-                                    <div class="card-header">
-                                        <h5 class="mb-0"><i class="fas fa-calendar-check me-2"></i>Attendance Upload</h5>
-                                    </div>
-                                    <div class="card-body">
-                                        <form id="attendanceForm" enctype="multipart/form-data">
-                                            <div class="mb-3">
-                                                <label class="form-label">Academic Year</label>
-                                                <input type="text" class="form-control" id="attendanceAcademicYear" name="academic_year" placeholder="e.g., 2025-26" required>
-                                            </div>
-                                            <div class="mb-3">
-                                                <div class="drop-zone" id="attendanceDrop">
-                                                    <div class="small text-muted mb-2">Drag & drop CSV/Excel file(s) here, or click to select.</div>
-                                                    <input type="file" class="form-control" id="attendanceFile" name="attendanceFile" accept=".csv,.xlsx,.xls" multiple required>
-                                                </div>
-                                                <div class="form-text">
-                                                    Upload CSV or Excel attendance data. The table should include Program, Branch, Year, Semester, Section, Date, Roll No, subject codes, Total, and % columns.
-                                                </div>
-                                                <div class="form-text" id="attendanceFileNameHelp">
-                                                    Filename/session format example: <b>jan2s22026.csv</b>, <b>feb2s22026.csv</b> (month should start with <b>jan/feb/.../dec</b>, year at end like <b>2026</b>).
-                                                    <div class="small text-muted">Session name preview: <span class="fw-bold" id="attendanceSessionPreview">-</span></div>
-                                                </div>
-                                            </div>
-                                            <button type="submit" class="btn btn-success">
-                                                <i class="fas fa-upload me-1"></i>Upload Attendance
-                                            </button>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row mt-4">
-                            <!-- Mid Marks Upload -->
-                            <div class="col-12">
-                                <div class="card">
-                                    <div class="card-header">
-                                        <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Mid Marks CSV</h5>
-                                    </div>
-                                    <div class="card-body">
-                                        <form id="midmarksForm" enctype="multipart/form-data">
-                                            <div class="row g-3">
-                                                <div class="col-md-4">
-                                                    <label class="form-label">College Name (optional)</label>
-                                                    <input type="text" class="form-control" id="midCollegeName" name="college_name" placeholder="College name">
-                                                </div>
-                                                <div class="col-md-4">
-                                                    <label class="form-label">Semester Info (optional)</label>
-                                                    <input type="text" class="form-control" id="midSemesterInfo" name="semester_info" placeholder="e.g., II B.Tech II Sem">
-                                                </div>
-                                                <div class="col-md-4">
-                                                    <label class="form-label">Academic Year (optional)</label>
-                                                    <input type="text" class="form-control" id="midAcademicYear" name="academic_year" placeholder="e.g., 2025-26">
-                                                </div>
-                                                <div class="col-md-4">
-                                                    <label class="form-label">Section (optional)</label>
-                                                    <input type="text" class="form-control" id="midSection" name="section" placeholder="e.g., A">
-                                                </div>
-                                                <div class="col-md-8">
-                                                    <label class="form-label">Details (optional)</label>
-                                                    <input type="text" class="form-control" id="midDetails" name="details" placeholder="Any notes about this upload">
-                                                </div>
-                                                <div class="col-12">
-                                                    <div class="drop-zone" id="midmarksDrop">
-                                                        <div class="small text-muted mb-2">Drag & drop CSV file(s) here, or click to select.</div>
-                                                        <input type="file" class="form-control" id="midmarksFile" name="midmarksFile" accept=".csv,.xlsx,.xls" multiple required>
-                                                    </div>
-                                                    <div class="form-text">
-                                                        Expected format: Excel/CSV with 2-row header (Row 1: Programm, Branch, Year, Semester, Section, Date, S.No, Hallticket, subject codes..., Total, Per.(%); Row 2: B.TECH, IT, II, I, I, 2025-2026, 1, 24501A12029, marks...). The system auto-extracts semester info, academic year, section, and department from the file.
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="mt-3">
-                                                <button type="submit" class="btn btn-success">
-                                                    <i class="fas fa-upload me-1"></i>Upload Mid Marks
-                                                </button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row mt-4">
-                            <div class="col-12">
-                                <div class="card">
-                                    <div class="card-header d-flex justify-content-between align-items-center">
-                                        <h5 class="mb-0"><i class="fas fa-database me-2"></i>Attendance Uploads (Manage)</h5>
-                                        <button class="btn btn-sm btn-outline-primary" type="button" id="refreshAttendanceUploads">
-                                            <i class="fas fa-rotate me-1"></i>Refresh
-                                        </button>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="small text-muted mb-2">Delete will remove rows from <b>attendance_uploads</b>, <b>attendance_summary</b>, and <b>attendance_subjects</b> for the selected file.</div>
-
-                                        <div id="attendanceUploadsStatus" class="alert d-none" role="alert"></div>
-
-                                        <div class="table-responsive">
-                                            <table class="table table-sm table-striped mb-0">
-                                                <thead class="table-dark">
-                                                    <tr>
-                                                        <th>FILE NAME</th>
-                                                        <th>SESSION NAME</th>
-                                                        <th>ACADEMIC YEAR</th>
-                                                        <th>SEMESTER</th>
-                                                        <th>BRANCH</th>
-                                                        <th>SECTION</th>
-                                                        <th>UPLOADED</th>
-                                                        <th class="text-end"></th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody id="attendanceUploadsBody">
-                                                    <tr><td colspan="7" class="text-muted">Loading...</td></tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row mt-4">
-                            <div class="col-12">
-                                <div class="card">
-                                    <div class="card-header d-flex justify-content-between align-items-center">
-                                        <h5 class="mb-0"><i class="fas fa-database me-2"></i>Mid Marks Uploads (Manage)</h5>
-                                        <button class="btn btn-sm btn-outline-primary" type="button" id="refreshMidmarksUploads">
-                                            <i class="fas fa-rotate me-1"></i>Refresh
-                                        </button>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="small text-muted mb-2">Delete will remove rows from <b>midmarks_uploads</b> and <b>midmarks_subject_marks</b> for the selected file.</div>
-
-                                        <div id="midmarksUploadsStatus" class="alert d-none" role="alert"></div>
-
-                                        <div class="table-responsive">
-                                            <table class="table table-sm table-striped mb-0">
-                                                <thead class="table-dark">
-                                                    <tr>
-                                                        <th>FILE NAME</th>
-                                                        <th>SEMESTER INFO</th>
-                                                        <th>ACADEMIC YEAR</th>
-                                                        <th>SECTION</th>
-                                                        <th>UPLOADED</th>
-                                                        <th class="text-end"></th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody id="midmarksUploadsBody">
-                                                    <tr><td colspan="6" class="text-muted">Loading...</td></tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Upload Status -->
-                        <div id="uploadStatus" class="mt-3" style="display: none;"></div>
-                    </div>
+                    <?php
+                    if (!defined('EMBEDDED_IN_DASHBOARD')) {
+                        define('EMBEDDED_IN_DASHBOARD', true);
+                    }
+                    require __DIR__ . '/dashboard_upload.php';
+                    ?>
                 </div>
 
                 <!-- Reports Section -->
@@ -806,6 +758,47 @@ require_once 'config.php';
                         </div>
                     </div>
                 </div>
+
+                <!-- User Management Section -->
+                <div id="users-section" class="section" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h2 class="mb-1"><i class="fas fa-users-cog me-2 text-primary"></i>User Management</h2>
+                            <p class="text-muted mb-0">Manage system users and their roles</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="openAddUserModal()">
+                            <i class="fas fa-plus me-1"></i>Add User
+                        </button>
+                    </div>
+
+                    <div class="card shadow-sm">
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0" style="font-size: 14px;">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th style="width: 60px;">ID</th>
+                                            <th>User</th>
+                                            <th>Email</th>
+                                            <th style="width: 120px;">Role</th>
+                                            <th style="width: 120px;">Created</th>
+                                            <th style="width: 100px;">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="usersTableBody">
+                                        <tr>
+                                            <td colspan="6" class="text-center py-4">
+                                                <div class="spinner-border text-primary" role="status">
+                                                    <span class="visually-hidden">Loading...</span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </main>
         </div>
     </div>
@@ -865,6 +858,47 @@ require_once 'config.php';
         </div>
     </div>
 
+    <!-- Add/Edit User Modal -->
+    <div class="modal fade" id="userModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="userModalTitle">Add User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="userForm">
+                        <input type="hidden" id="userId">
+                        <div class="mb-3">
+                            <label for="fullName" class="form-label">Full Name</label>
+                            <input type="text" class="form-control" id="fullName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="userEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="userEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="userPassword" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="userPassword" required minlength="6">
+                            <div class="form-text">Minimum 6 characters</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="userRole" class="form-label">Role</label>
+                            <select class="form-select" id="userRole" required>
+                                <option value="">Select Role</option>
+                                <option value="admin">Admin</option>
+                                <option value="placement">tnp</option>
+                                <option value="staff">Staff</option>
+                            </select>
+                        </div>
+                        <div id="userMsg" class="alert d-none" role="alert"></div>
+                        <button type="submit" class="btn btn-primary w-100" id="userSubmitBtn">Save User</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal fade" id="editPhotoModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -914,6 +948,15 @@ require_once 'config.php';
             
             $('.sidebar .nav-link').removeClass('active');
             $('[href="#' + section + '"]').addClass('active');
+
+            if (section === 'upload') {
+                if (typeof loadUnifiedAttendanceUploads === 'function') {
+                    loadUnifiedAttendanceUploads();
+                }
+                if (typeof loadUnifiedMidmarksUploads === 'function') {
+                    loadUnifiedMidmarksUploads();
+                }
+            }
         }
 
         // Logout function
@@ -931,6 +974,176 @@ require_once 'config.php';
             $('#cpSubmit').prop('disabled', false);
             bootstrap.Modal.getOrCreateInstance(modalEl).show();
         }
+
+        // User Management Functions
+        function loadUsers() {
+            $.ajax({
+                url: 'user_management.php?action=list',
+                method: 'GET',
+                dataType: 'json',
+                success: function(res) {
+                    if (res && res.success) {
+                        const tbody = $('#usersTableBody');
+                        tbody.empty();
+                        
+                        if (res.users.length === 0) {
+                            tbody.html('<tr><td colspan="6" class="text-center py-4 text-muted">No users found. Click "Add User" to create one.</td></tr>');
+                            return;
+                        }
+                        
+                        res.users.forEach(user => {
+                            const roleBadge = {
+                                'admin': { class: 'bg-danger', icon: 'fa-shield-alt' },
+                                'placement': { class: 'bg-success', icon: 'fa-briefcase' },
+                                'staff': { class: 'bg-primary', icon: 'fa-user' }
+                            }[user.role] || { class: 'bg-secondary', icon: 'fa-user' };
+                            
+                            const roleName = user.role.charAt(0).toUpperCase() + user.role.slice(1);
+                            
+                            tbody.append(`
+                                <tr>
+                                    <td class="text-muted">#${user.id}</td>
+                                    <td>
+                                        <div class="fw-semibold">${user.full_name || 'No name'}</div>
+                                    </td>
+                                    <td class="text-muted">${user.email}</td>
+                                    <td><span class="badge ${roleBadge.class}"><i class="fas ${roleBadge.icon} me-1"></i>${roleName}</span></td>
+                                    <td class="text-muted small">${new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-primary" onclick="editUser(${user.id})" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-outline-danger" onclick="deleteUser(${user.id})" title="Delete">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `);
+                        });
+                    }
+                },
+                error: function() {
+                    $('#usersTableBody').html('<tr><td colspan="6" class="text-center py-4 text-danger"><i class="fas fa-exclamation-circle me-2"></i>Failed to load users</td></tr>');
+                }
+            });
+        }
+
+        function openAddUserModal() {
+            $('#userModalTitle').text('Add User');
+            $('#userForm')[0].reset();
+            $('#userId').val('');
+            $('#userPassword').prop('required', true);
+            $('#userMsg').addClass('d-none');
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('userModal')).show();
+        }
+
+        function editUser(userId) {
+            $.ajax({
+                url: 'user_management.php?action=list',
+                method: 'GET',
+                dataType: 'json',
+                success: function(res) {
+                    if (res && res.success) {
+                        const user = res.users.find(u => u.id === userId);
+                        if (user) {
+                            $('#userModalTitle').text('Edit User');
+                            $('#userId').val(user.id);
+                            $('#fullName').val(user.full_name || '');
+                            $('#userEmail').val(user.email);
+                            $('#userRole').val(user.role);
+                            $('#userPassword').prop('required', false).val('');
+                            $('#userMsg').addClass('d-none');
+                            bootstrap.Modal.getOrCreateInstance(document.getElementById('userModal')).show();
+                        }
+                    }
+                }
+            });
+        }
+
+        function deleteUser(userId) {
+            if (confirm('Are you sure you want to delete this user?')) {
+                $.ajax({
+                    url: 'user_management.php?action=delete',
+                    method: 'POST',
+                    dataType: 'json',
+                    data: { user_id: userId },
+                    success: function(res) {
+                        if (res && res.success) {
+                            alert('User deleted successfully');
+                            loadUsers();
+                        } else {
+                            alert(res.message || 'Failed to delete user');
+                        }
+                    },
+                    error: function() {
+                        alert('Failed to delete user');
+                    }
+                });
+            }
+        }
+
+        $('#userForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            const userId = $('#userId').val();
+            const fullName = $('#fullName').val();
+            const email = $('#userEmail').val();
+            const password = $('#userPassword').val();
+            const role = $('#userRole').val();
+            
+            const action = userId ? 'update' : 'add';
+            const data = {
+                full_name: fullName,
+                email: email,
+                role: role
+            };
+            
+            if (userId) {
+                data.user_id = userId;
+            }
+            if (password) {
+                data.password = password;
+            }
+            
+            $('#userSubmitBtn').prop('disabled', true);
+            $('#userMsg').addClass('d-none');
+            
+            $.ajax({
+                url: 'user_management.php?action=' + action,
+                method: 'POST',
+                dataType: 'json',
+                data: data,
+                success: function(res) {
+                    if (res && res.success) {
+                        $('#userMsg').removeClass('d-none alert-danger').addClass('alert alert-success').text(res.message);
+                        $('#userForm')[0].reset();
+                        setTimeout(() => {
+                            bootstrap.Modal.getInstance(document.getElementById('userModal')).hide();
+                            loadUsers();
+                        }, 1000);
+                    } else {
+                        $('#userMsg').removeClass('d-none alert-success').addClass('alert alert-danger').text(res.message || 'Failed to save user');
+                    }
+                },
+                error: function() {
+                    $('#userMsg').removeClass('d-none alert-success').addClass('alert alert-danger').text('Failed to save user');
+                },
+                complete: function() {
+                    $('#userSubmitBtn').prop('disabled', false);
+                }
+            });
+        });
+
+        // Load users when users section is shown
+        const originalShowSection = showSection;
+        showSection = function(section) {
+            originalShowSection(section);
+            if (section === 'users') {
+                loadUsers();
+            }
+        };
 
         $('#changePasswordForm').on('submit', function(e){
             e.preventDefault();
@@ -1611,6 +1824,76 @@ function getSubjectName(subjectCode) {
             });
         });
 
+        $('#smartscoreForm').on('submit', function(e) {
+            e.preventDefault();
+            const fileInput = $('#smartscoreFile')[0];
+            const file = fileInput && fileInput.files ? fileInput.files[0] : null;
+            
+            if (!file) {
+                $('#smartscoreUploadStatus').html('<div class="alert alert-warning">Please select an Excel file</div>');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('smartscoreFile', file);
+            
+            $('#smartscoreUploadStatus').html('<div class="alert alert-info"><i class="fas fa-spinner fa-spin me-2"></i>Uploading...</div>');
+            
+            $.ajax({
+                url: 'upload_smartscore.php',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    const result = typeof response === 'string' ? JSON.parse(response) : response;
+                    if (result.success) {
+                        $('#smartscoreUploadStatus').html('<div class="alert alert-success"><i class="fas fa-check-circle me-2"></i>' + result.message + '</div>');
+                    } else {
+                        $('#smartscoreUploadStatus').html('<div class="alert alert-danger"><i class="fas fa-exclamation-circle me-2"></i>' + result.message + '</div>');
+                    }
+                },
+                error: function() {
+                    $('#smartscoreUploadStatus').html('<div class="alert alert-danger"><i class="fas fa-exclamation-circle me-2"></i>Error uploading file</div>');
+                }
+            });
+        });
+
+        $('#courseCodesForm').on('submit', function(e) {
+            e.preventDefault();
+            const fileInput = $('#courseCodesFile')[0];
+            const file = fileInput && fileInput.files ? fileInput.files[0] : null;
+            
+            if (!file) {
+                $('#courseCodesUploadStatus').html('<div class="alert alert-warning">Please select an Excel file</div>');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('courseCodesFile', file);
+            
+            $('#courseCodesUploadStatus').html('<div class="alert alert-info"><i class="fas fa-spinner fa-spin me-2"></i>Uploading...</div>');
+            
+            $.ajax({
+                url: 'upload_course_codes.php',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    const result = typeof response === 'string' ? JSON.parse(response) : response;
+                    if (result.success) {
+                        $('#courseCodesUploadStatus').html('<div class="alert alert-success"><i class="fas fa-check-circle me-2"></i>' + result.message + '</div>');
+                    } else {
+                        $('#courseCodesUploadStatus').html('<div class="alert alert-danger"><i class="fas fa-exclamation-circle me-2"></i>' + result.message + '</div>');
+                    }
+                },
+                error: function() {
+                    $('#courseCodesUploadStatus').html('<div class="alert alert-danger"><i class="fas fa-exclamation-circle me-2"></i>Error uploading file</div>');
+                }
+            });
+        });
+
         // uploadFile replaced by uploadMultipleFiles + uploadSingleFile
 
         function showMidmarksUploadsStatus(type, message) {
@@ -1621,6 +1904,10 @@ function getSubjectName(subjectCode) {
         }
 
         function loadMidmarksUploads() {
+            if (typeof loadUnifiedMidmarksUploads === 'function') {
+                loadUnifiedMidmarksUploads();
+                return;
+            }
             const body = $('#midmarksUploadsBody');
             if (!body.length) return;
             body.html('<tr><td colspan="6" class="text-muted">Loading...</td></tr>');
@@ -1708,7 +1995,12 @@ function getSubjectName(subjectCode) {
         }
 
         function loadAttendanceUploads() {
+            if (typeof loadUnifiedAttendanceUploads === 'function') {
+                loadUnifiedAttendanceUploads();
+                return;
+            }
             const body = $('#attendanceUploadsBody');
+            if (!body.length) return;
             body.html('<tr><td colspan="7" class="text-muted">Loading...</td></tr>');
 
             $.ajax({
@@ -1976,6 +2268,27 @@ function getSubjectName(subjectCode) {
             });
         }
         
+        // Live Clock Ticker
+        function updateDashboardClock() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('en-US', { hour12: false });
+            const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            const timeEl = document.getElementById('dashboardLiveTime');
+            const dateEl = document.getElementById('dashboardLiveDate');
+            if (timeEl) timeEl.textContent = timeStr;
+            if (dateEl) dateEl.textContent = dateStr;
+        }
+        setInterval(updateDashboardClock, 1000);
+        updateDashboardClock();
+
+        // Roll number Enter key search
+        $('#rollNumber').on('keypress', function(e) {
+            if (e.which === 13) {
+                e.preventDefault();
+                searchStudent();
+            }
+        });
+
         // Mobile sidebar toggle
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');

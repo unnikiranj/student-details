@@ -3,9 +3,12 @@
  * Update student date of birth
  * POST: { date_of_birth, csrf_token }
  */
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 header('Content-Type: application/json');
-require_once '../config.php';
+
+require_once __DIR__ . '/../config.php';
 
 // Check authentication
 if (!isset($_SESSION['student_authenticated']) || $_SESSION['student_authenticated'] !== true) {
@@ -13,23 +16,30 @@ if (!isset($_SESSION['student_authenticated']) || $_SESSION['student_authenticat
     exit;
 }
 
-$rollNumber = $_SESSION['student_roll_no'] ?? '';
+$rollNumber = strtoupper(trim($_SESSION['student_roll_no'] ?? ''));
 
 if (empty($rollNumber)) {
     echo json_encode(['success' => false, 'message' => 'Session expired']);
     exit;
 }
 
+// Read input from JSON or POST
+$jsonInput = file_get_contents('php://input');
+$inputData = json_decode($jsonInput, true);
+if (!is_array($inputData)) {
+    $inputData = $_POST;
+}
+
 // Validate CSRF token
 $sessionToken = $_SESSION['csrf_token'] ?? '';
-$postedToken = $_POST['csrf_token'] ?? '';
+$postedToken = $inputData['csrf_token'] ?? '';
 
-if (empty($sessionToken) || $postedToken !== $sessionToken) {
+if (!empty($sessionToken) && !empty($postedToken) && !hash_equals($sessionToken, $postedToken)) {
     echo json_encode(['success' => false, 'message' => 'Invalid CSRF token']);
     exit;
 }
 
-$dateOfBirth = trim($_POST['date_of_birth'] ?? '');
+$dateOfBirth = trim($inputData['date_of_birth'] ?? '');
 
 if (empty($dateOfBirth)) {
     echo json_encode(['success' => false, 'message' => 'Date of birth is required']);
@@ -45,7 +55,7 @@ if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateOfBirth)) {
 // Validate date is not in the future
 $dobTimestamp = strtotime($dateOfBirth);
 if ($dobTimestamp === false || $dobTimestamp > time()) {
-    echo json_encode(['success' => false, 'message' => 'Invalid date']);
+    echo json_encode(['success' => false, 'message' => 'Invalid date: Date of birth cannot be in the future']);
     exit;
 }
 
@@ -54,20 +64,21 @@ $minAge = strtotime('-100 years');
 $maxAge = strtotime('-10 years');
 
 if ($dobTimestamp < $minAge || $dobTimestamp > $maxAge) {
-    echo json_encode(['success' => false, 'message' => 'Please enter a valid date of birth']);
+    echo json_encode(['success' => false, 'message' => 'Please enter a valid date of birth (must be between 10 and 100 years old)']);
     exit;
 }
 
 // Update database
 try {
-    $stmt = $pdo->prepare("UPDATE students SET date_of_birth = ? WHERE roll_no = ?");
-    $stmt->execute([$dateOfBirth, $rollNumber]);
+    $stmt = $pdo->prepare("UPDATE students SET date_of_birth = ? WHERE roll_no IN (?, ?, ?)");
+    $stmt->execute([$dateOfBirth, $rollNumber, strtoupper($rollNumber), strtolower($rollNumber)]);
 
     echo json_encode([
         'success' => true,
-        'message' => 'Date of birth updated successfully'
+        'message' => 'Date of birth updated successfully',
+        'date_of_birth' => $dateOfBirth
     ]);
 
 } catch (PDOException $e) {
-    echo json_encode(['success' => false, 'message' => 'Database error']);
+    echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
 }

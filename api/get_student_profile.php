@@ -3,9 +3,13 @@
  * Get current student profile data
  * Requires authenticated session
  */
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 header('Content-Type: application/json');
-require_once '../config.php';
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+
+require_once __DIR__ . '/../config.php';
 
 // Check authentication
 if (!isset($_SESSION['student_authenticated']) || $_SESSION['student_authenticated'] !== true) {
@@ -13,7 +17,7 @@ if (!isset($_SESSION['student_authenticated']) || $_SESSION['student_authenticat
     exit;
 }
 
-$rollNumber = $_SESSION['student_roll_no'] ?? '';
+$rollNumber = strtoupper(trim($_SESSION['student_roll_no'] ?? ''));
 
 if (empty($rollNumber)) {
     echo json_encode(['success' => false, 'message' => 'Session expired']);
@@ -22,19 +26,30 @@ if (empty($rollNumber)) {
 
 try {
     // Get student data
-    $stmt = $pdo->prepare("SELECT student_name, student_photo, date_of_birth FROM students WHERE roll_no = ? LIMIT 1");
-    $stmt->execute([$rollNumber]);
+    $stmt = $pdo->prepare("SELECT student_name, student_photo, date_of_birth, department, email, phone, father_name FROM students WHERE roll_no IN (?, ?, ?) LIMIT 1");
+    $stmt->execute([$rollNumber, strtoupper($rollNumber), strtolower($rollNumber)]);
     $student = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$student) {
-        echo json_encode(['success' => false, 'message' => 'Student not found']);
-        exit;
+        // Fallback check in student_results
+        $stmt2 = $pdo->prepare("SELECT student_name FROM student_results WHERE roll_no IN (?, ?, ?) LIMIT 1");
+        $stmt2->execute([$rollNumber, strtoupper($rollNumber), strtolower($rollNumber)]);
+        $res = $stmt2->fetch(PDO::FETCH_ASSOC);
+        
+        $student = [
+            'student_name' => $res['student_name'] ?? 'Student',
+            'student_photo' => '',
+            'date_of_birth' => '',
+            'department' => '',
+            'email' => '',
+            'phone' => '',
+            'father_name' => ''
+        ];
     }
 
     // Build photo path
     $photoPath = '';
     if (!empty($student['student_photo'])) {
-        // Check if it's a relative path
         if (strpos($student['student_photo'], 'http') === 0) {
             $photoPath = $student['student_photo'];
         } else {
@@ -44,11 +59,14 @@ try {
 
     echo json_encode([
         'success' => true,
+        'roll_no' => $rollNumber,
         'student_name' => $student['student_name'] ?? '',
         'photo_path' => $photoPath,
-        'date_of_birth' => $student['date_of_birth'] ?? ''
+        'date_of_birth' => $student['date_of_birth'] ?? '',
+        'department' => $student['department'] ?? '',
+        'father_name' => $student['father_name'] ?? ''
     ]);
 
 } catch (PDOException $e) {
-    echo json_encode(['success' => false, 'message' => 'Database error']);
+    echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
 }

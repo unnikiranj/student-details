@@ -1,20 +1,33 @@
 {
   "name": "studentdetails",
   "version": "1.0.0",
-  "description": "Student Details Portal",
+  "description": "Student Details Portal with PHP REST API and Kotlin Android client",
   "main": "index.php",
   "scripts": {
     "build": "node build.js",
     "build:js": "node build-js.js",
     "build:css": "node build-css.js",
-    "watch": "node watch.js"
+    "watch": "node watch.js",
+    "test:api": "php test_api_v1.php",
+    "adb:devices": "C:\\Users\\Dell\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe devices",
+    "adb:connect": "C:\\Users\\Dell\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe reverse tcp:80 tcp:80",
+    "app:build": "cd PVPSITStudentApp && gradlew.bat assembleDebug",
+    "app:install": "C:\\Users\\Dell\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe install -r PVPSITStudentApp\\app\\build\\outputs\\apk\\debug\\app-debug.apk",
+    "mobile:preview": "start http://localhost/studentdetails/mobile_preview.php"
   },
   "devDependencies": {
     "javascript-obfuscator": "^4.0.2",
     "cssnano": "^6.0.1",
     "postcss": "^8.4.31"
   },
-  "keywords": ["student", "portal", "education"],
+  "keywords": [
+    "student",
+    "portal",
+    "education",
+    "android",
+    "kotlin",
+    "rest-api"
+  ],
   "author": "",
   "license": "ISC"
 }

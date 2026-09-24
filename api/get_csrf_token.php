@@ -3,8 +3,15 @@
  * Get CSRF token
  * Returns a fresh CSRF token for the session
  */
-session_start();
-header('Content-Type: application/json');
+if (session_status() === PHP_SESSION_NONE) {
+    @session_start();
+}
+
+if (!headers_sent()) {
+    header('Content-Type: application/json');
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('Pragma: no-cache');
+}
 
 // Generate new token if not exists
 if (empty($_SESSION['csrf_token'])) {

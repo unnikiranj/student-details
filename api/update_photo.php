@@ -3,9 +3,12 @@
  * Update student profile photo
  * POST: multipart/form-data with photo file and csrf_token
  */
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 header('Content-Type: application/json');
-require_once '../config.php';
+
+require_once __DIR__ . '/../config.php';
 
 // Check authentication
 if (!isset($_SESSION['student_authenticated']) || $_SESSION['student_authenticated'] !== true) {
@@ -13,7 +16,7 @@ if (!isset($_SESSION['student_authenticated']) || $_SESSION['student_authenticat
     exit;
 }
 
-$rollNumber = $_SESSION['student_roll_no'] ?? '';
+$rollNumber = strtoupper(trim($_SESSION['student_roll_no'] ?? ''));
 
 if (empty($rollNumber)) {
     echo json_encode(['success' => false, 'message' => 'Session expired']);
@@ -24,14 +27,15 @@ if (empty($rollNumber)) {
 $sessionToken = $_SESSION['csrf_token'] ?? '';
 $postedToken = $_POST['csrf_token'] ?? '';
 
-if (empty($sessionToken) || $postedToken !== $sessionToken) {
+if (!empty($sessionToken) && !empty($postedToken) && !hash_equals($sessionToken, $postedToken)) {
     echo json_encode(['success' => false, 'message' => 'Invalid CSRF token']);
     exit;
 }
 
 // Check if file was uploaded
 if (!isset($_FILES['profile_photo']) || $_FILES['profile_photo']['error'] !== UPLOAD_ERR_OK) {
-    echo json_encode(['success' => false, 'message' => 'No file uploaded or upload error']);
+    $uploadError = $_FILES['profile_photo']['error'] ?? 'No file';
+    echo json_encode(['success' => false, 'message' => 'No file uploaded or upload error (code: ' . $uploadError . ')']);
     exit;
 }
 
@@ -44,10 +48,15 @@ if ($file['size'] > 2 * 1024 * 1024) {
 }
 
 // Validate file type
-$allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
-$finfo = finfo_open(FILEINFO_MIME_TYPE);
-$mimeType = finfo_file($finfo, $file['tmp_name']);
-finfo_close($finfo);
+$allowedTypes = ['image/jpeg', 'image/jpg', 'image/pjpeg', 'image/png'];
+$mimeType = '';
+if (function_exists('finfo_open')) {
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mimeType = finfo_file($finfo, $file['tmp_name']);
+    finfo_close($finfo);
+} elseif (function_exists('mime_content_type')) {
+    $mimeType = mime_content_type($file['tmp_name']);
+}
 
 if (!in_array($mimeType, $allowedTypes)) {
     echo json_encode(['success' => false, 'message' => 'Only JPG, JPEG, and PNG files are allowed']);
@@ -55,7 +64,7 @@ if (!in_array($mimeType, $allowedTypes)) {
 }
 
 // Validate image dimensions
-$imageInfo = getimagesize($file['tmp_name']);
+$imageInfo = @getimagesize($file['tmp_name']);
 if (!$imageInfo) {
     echo json_encode(['success' => false, 'message' => 'Invalid image file']);
     exit;
@@ -70,15 +79,16 @@ $height = $imageInfo[1];
 // Calculate new dimensions maintaining aspect ratio
 if ($width > $maxWidth || $height > $maxHeight) {
     $ratio = min($maxWidth / $width, $maxHeight / $height);
-    $newWidth = round($width * $ratio);
-    $newHeight = round($height * $ratio);
+    $newWidth = (int)round($width * $ratio);
+    $newHeight = (int)round($height * $ratio);
 } else {
-    $newWidth = $width;
-    $newHeight = $height;
+    $newWidth = (int)$width;
+    $newHeight = (int)$height;
 }
 
 // Create new image
-$sourceImage = imagecreatefromstring(file_get_contents($file['tmp_name']));
+$fileContent = file_get_contents($file['tmp_name']);
+$sourceImage = @imagecreatefromstring($fileContent);
 if (!$sourceImage) {
     echo json_encode(['success' => false, 'message' => 'Failed to process image']);
     exit;
@@ -98,14 +108,15 @@ if ($mimeType === 'image/png') {
 imagecopyresampled($newImage, $sourceImage, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
 
 // Create uploads directory if it doesn't exist
-$uploadDir = '../uploads/student_photos/';
+$uploadDir = __DIR__ . '/../uploads/student_photos/';
 if (!is_dir($uploadDir)) {
     mkdir($uploadDir, 0755, true);
 }
 
 // Generate unique filename using roll number
-$fileExtension = pathinfo($file['name'], PATHINFO_EXTENSION);
-$fileName = $rollNumber . '_' . time() . '.' . $fileExtension;
+$fileExtension = ($mimeType === 'image/png') ? 'png' : 'jpg';
+$cleanRoll = preg_replace('/[^0-9A-Za-z_-]/', '', $rollNumber);
+$fileName = $cleanRoll . '_' . time() . '.' . $fileExtension;
 $filePath = $uploadDir . $fileName;
 
 // Save resized image
@@ -121,26 +132,24 @@ imagedestroy($newImage);
 
 // Delete old photo if exists
 try {
-    $stmt = $pdo->prepare("SELECT student_photo FROM students WHERE roll_no = ? LIMIT 1");
-    $stmt->execute([$rollNumber]);
+    $stmt = $pdo->prepare("SELECT student_photo FROM students WHERE roll_no IN (?, ?, ?) LIMIT 1");
+    $stmt->execute([$rollNumber, strtoupper($rollNumber), strtolower($rollNumber)]);
     $student = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($student && !empty($student['student_photo'])) {
-        $oldPhotoPath = $uploadDir . $student['student_photo'];
+        $oldPhotoPath = $uploadDir . basename($student['student_photo']);
         if (file_exists($oldPhotoPath)) {
-            unlink($oldPhotoPath);
+            @unlink($oldPhotoPath);
         }
     }
 } catch (PDOException $e) {
     // Continue even if old photo deletion fails
 }
 
-// Move uploaded file is now handled by image processing above
-
 // Update database
 try {
-    $stmt = $pdo->prepare("UPDATE students SET student_photo = ? WHERE roll_no = ?");
-    $stmt->execute([$fileName, $rollNumber]);
+    $stmt = $pdo->prepare("UPDATE students SET student_photo = ? WHERE roll_no IN (?, ?, ?)");
+    $stmt->execute([$fileName, $rollNumber, strtoupper($rollNumber), strtolower($rollNumber)]);
 
     echo json_encode([
         'success' => true,
@@ -151,7 +160,7 @@ try {
 } catch (PDOException $e) {
     // Delete uploaded file if database update fails
     if (file_exists($filePath)) {
-        unlink($filePath);
+        @unlink($filePath);
     }
     echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
 }

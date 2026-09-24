@@ -1,0 +1,872 @@
+/* ==================== STUDY BUDDY MASCOT ==================== */
+
+/* Background effects container */
+.mascot-widget::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle at center,
+      rgba(79, 70, 229, 0.1) 0%,
+      rgba(79, 70, 229, 0.05) 30%,
+      transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+  animation: mascotBackgroundPulse 4s ease-in-out infinite;
+}
+
+@keyframes mascotBackgroundPulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+
+  50% {
+    transform: scale(1.1);
+    opacity: 0.5;
+  }
+}
+
+/* Floating particles */
+.mascot-widget::after {
+  content: '';
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  width: 120px;
+  height: 120px;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.mascot-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: var(--accent, #4f46e5);
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.mascot-particle:nth-child(1) {
+  animation: particleFloat1 3s ease-in-out infinite;
+  right: 10px;
+  bottom: 10px;
+}
+
+.mascot-particle:nth-child(2) {
+  animation: particleFloat2 4s ease-in-out infinite 0.5s;
+  right: 30px;
+  bottom: 20px;
+  background: #f59e0b;
+}
+
+.mascot-particle:nth-child(3) {
+  animation: particleFloat3 3.5s ease-in-out infinite 1s;
+  right: 50px;
+  bottom: 5px;
+  background: #10b981;
+}
+
+.mascot-particle:nth-child(4) {
+  animation: particleFloat4 4.5s ease-in-out infinite 1.5s;
+  right: 15px;
+  bottom: 40px;
+  background: #f97316;
+}
+
+.mascot-particle:nth-child(5) {
+  animation: particleFloat5 3.2s ease-in-out infinite 2s;
+  right: 40px;
+  bottom: 35px;
+  background: #f43f5e;
+}
+
+@keyframes particleFloat1 {
+
+  0%,
+  100% {
+    transform: translateY(0) scale(0);
+    opacity: 0;
+  }
+
+  50% {
+    transform: translateY(-30px) scale(1);
+    opacity: 0.8;
+  }
+}
+
+@keyframes particleFloat2 {
+
+  0%,
+  100% {
+    transform: translateY(0) scale(0);
+    opacity: 0;
+  }
+
+  50% {
+    transform: translateY(-40px) scale(1);
+    opacity: 0.7;
+  }
+}
+
+@keyframes particleFloat3 {
+
+  0%,
+  100% {
+    transform: translateY(0) scale(0);
+    opacity: 0;
+  }
+
+  50% {
+    transform: translateY(-25px) scale(1);
+    opacity: 0.9;
+  }
+}
+
+@keyframes particleFloat4 {
+
+  0%,
+  100% {
+    transform: translateY(0) scale(0);
+    opacity: 0;
+  }
+
+  50% {
+    transform: translateY(-35px) scale(1);
+    opacity: 0.6;
+  }
+}
+
+@keyframes particleFloat5 {
+
+  0%,
+  100% {
+    transform: translateY(0) scale(0);
+    opacity: 0;
+  }
+
+  50% {
+    transform: translateY(-20px) scale(1);
+    opacity: 0.8;
+  }
+}
+
+/* Confetti effects */
+.mascot-confetti {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.mascot-confetti.active {
+  animation: confettiFall 2s ease-out forwards;
+}
+
+@keyframes confettiFall {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate(var(--confetti-x), var(--confetti-y)) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+/* Confetti colors and shapes */
+.mascot-confetti.c1 {
+  background: #f59e0b;
+  border-radius: 2px;
+}
+
+.mascot-confetti.c2 {
+  background: #10b981;
+  border-radius: 50%;
+}
+
+.mascot-confetti.c3 {
+  background: #4f46e5;
+  border-radius: 2px;
+}
+
+.mascot-confetti.c4 {
+  background: #f97316;
+  border-radius: 50%;
+}
+
+.mascot-confetti.c5 {
+  background: #f43f5e;
+  border-radius: 2px;
+}
+
+.mascot-confetti.c6 {
+  background: #8b5cf6;
+  border-radius: 50%;
+}
+
+.mascot-confetti.c7 {
+  background: #ec4899;
+  border-radius: 2px;
+}
+
+.mascot-confetti.c8 {
+  background: #06b6d4;
+  border-radius: 50%;
+}
+
+.mascot-confetti.c9 {
+  background: #fbbf24;
+  border-radius: 2px;
+}
+
+.mascot-confetti.c10 {
+  background: #a3e635;
+  border-radius: 50%;
+}
+
+.mascot-confetti.c11 {
+  background: #ff6b6b;
+  border-radius: 2px;
+}
+
+.mascot-confetti.c12 {
+  background: #4ecdc4;
+  border-radius: 50%;
+}
+
+.mascot-confetti.c13 {
+  background: #ffe66d;
+  border-radius: 2px;
+}
+
+.mascot-confetti.c14 {
+  background: #95e1d3;
+  border-radius: 50%;
+}
+
+.mascot-confetti.c15 {
+  background: #f38181;
+  border-radius: 2px;
+}
+
+.mascot-confetti.c16 {
+  background: #aa96da;
+  border-radius: 50%;
+}
+
+.mascot-confetti.c17 {
+  background: #fcbad3;
+  border-radius: 2px;
+}
+
+.mascot-confetti.c18 {
+  background: #a8d8ea;
+  border-radius: 50%;
+}
+
+.mascot-confetti.c19 {
+  background: #ff9a8b;
+  border-radius: 2px;
+}
+
+.mascot-confetti.c20 {
+  background: #ffd93d;
+  border-radius: 50%;
+}
+
+.mascot-confetti.c21 {
+  background: #6c5ce7;
+  border-radius: 2px;
+}
+
+.mascot-confetti.c22 {
+  background: #00b894;
+  border-radius: 50%;
+}
+
+.mascot-confetti.c23 {
+  background: #e17055;
+  border-radius: 2px;
+}
+
+.mascot-confetti.c24 {
+  background: #fdcb6e;
+  border-radius: 50%;
+}
+
+.mascot-confetti.c25 {
+  background: #d63031;
+  border-radius: 2px;
+}
+
+/* Flare effects */
+.mascot-flare {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  z-index: -1;
+  mix-blend-mode: screen;
+}
+
+.mascot-flare.active {
+  animation: flareShoot 0.8s ease-out forwards;
+}
+
+@keyframes flareShoot {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate(var(--flare-x), var(--flare-y)) scale(0.3);
+    opacity: 0;
+  }
+}
+
+/* Enhanced flare colors with gradients and glows */
+.mascot-flare.flare-1 {
+  background: radial-gradient(circle, #f59e0b 0%, #fbbf24 50%, transparent 70%);
+  box-shadow: 0 0 20px #f59e0b, 0 0 40px #fbbf24, 0 0 60px rgba(245, 158, 11, 0.5);
+}
+
+.mascot-flare.flare-2 {
+  background: radial-gradient(circle, #10b981 0%, #34d399 50%, transparent 70%);
+  box-shadow: 0 0 20px #10b981, 0 0 40px #34d399, 0 0 60px rgba(16, 185, 129, 0.5);
+}
+
+.mascot-flare.flare-3 {
+  background: radial-gradient(circle, #4f46e5 0%, #818cf8 50%, transparent 70%);
+  box-shadow: 0 0 20px #4f46e5, 0 0 40px #818cf8, 0 0 60px rgba(79, 70, 229, 0.5);
+}
+
+.mascot-flare.flare-4 {
+  background: radial-gradient(circle, #f97316 0%, #fb923c 50%, transparent 70%);
+  box-shadow: 0 0 20px #f97316, 0 0 40px #fb923c, 0 0 60px rgba(249, 115, 22, 0.5);
+}
+
+.mascot-flare.flare-5 {
+  background: radial-gradient(circle, #f43f5e 0%, #fb7185 50%, transparent 70%);
+  box-shadow: 0 0 20px #f43f5e, 0 0 40px #fb7185, 0 0 60px rgba(244, 63, 94, 0.5);
+}
+
+.mascot-flare.flare-6 {
+  background: radial-gradient(circle, #8b5cf6 0%, #a78bfa 50%, transparent 70%);
+  box-shadow: 0 0 20px #8b5cf6, 0 0 40px #a78bfa, 0 0 60px rgba(139, 92, 246, 0.5);
+}
+
+.mascot-flare.flare-7 {
+  background: radial-gradient(circle, #ec4899 0%, #f472b6 50%, transparent 70%);
+  box-shadow: 0 0 20px #ec4899, 0 0 40px #f472b6, 0 0 60px rgba(236, 72, 153, 0.5);
+}
+
+.mascot-flare.flare-8 {
+  background: radial-gradient(circle, #06b6d4 0%, #22d3ee 50%, transparent 70%);
+  box-shadow: 0 0 20px #06b6d4, 0 0 40px #22d3ee, 0 0 60px rgba(6, 182, 212, 0.5);
+}
+
+/* Trail effect for flares */
+.mascot-flare::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: inherit;
+  transform: translate(-50%, -50%) scale(0.5);
+  opacity: 0.5;
+  animation: trailPulse 0.4s ease-out infinite;
+}
+
+@keyframes trailPulse {
+
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(0.5);
+    opacity: 0.5;
+  }
+
+  50% {
+    transform: translate(-50%, -50%) scale(1.5);
+    opacity: 0.2;
+  }
+}
+
+/* Burst flare effect */
+.mascot-flare.burst {
+  animation: flareBurst 0.6s ease-out forwards;
+}
+
+@keyframes flareBurst {
+  0% {
+    transform: translate(0, 0) scale(0.5);
+    opacity: 1;
+  }
+
+  50% {
+    transform: translate(calc(var(--flare-x) * 0.5), calc(var(--flare-y) * 0.5)) scale(2);
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: translate(var(--flare-x), var(--flare-y)) scale(0.1);
+    opacity: 0;
+  }
+}
+
+/* Spiral flare effect */
+.mascot-flare.spiral {
+  animation: flareSpiral 1.2s ease-out forwards;
+}
+
+@keyframes flareSpiral {
+  0% {
+    transform: translate(0, 0) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate(var(--flare-x), var(--flare-y)) scale(0.2) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* Mood-specific background effects */
+.mascot-widget.mood-excited::before {
+  background: radial-gradient(circle at center,
+      rgba(245, 158, 11, 0.15) 0%,
+      rgba(245, 158, 11, 0.08) 30%,
+      transparent 70%);
+  animation: mascotBackgroundPulse 2s ease-in-out infinite;
+}
+
+.mascot-widget.mood-happy::before {
+  background: radial-gradient(circle at center,
+      rgba(16, 185, 129, 0.15) 0%,
+      rgba(16, 185, 129, 0.08) 30%,
+      transparent 70%);
+  animation: mascotBackgroundPulse 3s ease-in-out infinite;
+}
+
+.mascot-widget.mood-neutral::before {
+  background: radial-gradient(circle at center,
+      rgba(79, 70, 229, 0.12) 0%,
+      rgba(79, 70, 229, 0.06) 30%,
+      transparent 70%);
+  animation: mascotBackgroundPulse 4s ease-in-out infinite;
+}
+
+.mascot-widget.mood-concerned::before {
+  background: radial-gradient(circle at center,
+      rgba(249, 115, 22, 0.12) 0%,
+      rgba(249, 115, 22, 0.06) 30%,
+      transparent 70%);
+  animation: mascotBackgroundPulse 3.5s ease-in-out infinite;
+}
+
+.mascot-widget.mood-worried::before {
+  background: radial-gradient(circle at center,
+      rgba(244, 63, 94, 0.12) 0%,
+      rgba(244, 63, 94, 0.06) 30%,
+      transparent 70%);
+  animation: mascotBackgroundPulse 2.5s ease-in-out infinite;
+}
+
+.mascot-widget {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 9500;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  font-family: var(--font, "Inter", sans-serif);
+}
+
+/* Character glow effect based on mood */
+.mascot-character.mood-excited {
+  filter: drop-shadow(0 0 20px rgba(245, 158, 11, 0.6)) drop-shadow(0 8px 16px rgba(0, 0, 0, .18));
+}
+
+.mascot-character.mood-happy {
+  filter: drop-shadow(0 0 15px rgba(16, 185, 129, 0.5)) drop-shadow(0 8px 16px rgba(0, 0, 0, .18));
+}
+
+.mascot-character.mood-neutral {
+  filter: drop-shadow(0 0 10px rgba(79, 70, 229, 0.4)) drop-shadow(0 8px 16px rgba(0, 0, 0, .18));
+}
+
+.mascot-character.mood-concerned {
+  filter: drop-shadow(0 0 12px rgba(249, 115, 22, 0.4)) drop-shadow(0 8px 16px rgba(0, 0, 0, .18));
+}
+
+.mascot-character.mood-worried {
+  filter: drop-shadow(0 0 15px rgba(244, 63, 94, 0.5)) drop-shadow(0 8px 16px rgba(0, 0, 0, .18));
+}
+
+/* ---- Speech bubble ---- */
+.mascot-bubble {
+  position: relative;
+  max-width: 240px;
+  background: #fff;
+  border: 1px solid var(--border-md, rgba(0, 0, 0, .15));
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, .15);
+  padding: 12px 30px 12px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--ink, #0d1117);
+  opacity: 0;
+  transform: translateY(10px) scale(.92);
+  transform-origin: bottom right;
+  pointer-events: none;
+  transition: opacity .25s ease, transform .25s ease;
+}
+
+.mascot-bubble:after {
+  content: "";
+  position: absolute;
+  right: 26px;
+  bottom: -7px;
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border-right: 1px solid var(--border-md, rgba(0, 0, 0, .15));
+  border-bottom: 1px solid var(--border-md, rgba(0, 0, 0, .15));
+  transform: rotate(45deg);
+}
+
+.mascot-bubble.show {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.mascot-bubble-close {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  background: none;
+  border: none;
+  color: var(--ink-faint, #9ca3af);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px;
+}
+
+.mascot-bubble-close:hover {
+  color: var(--ink, #0d1117);
+}
+
+/* ---- Character ---- */
+.mascot-character {
+  width: 76px;
+  height: 76px;
+  cursor: pointer;
+  color: var(--accent, #4f46e5);
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, .18));
+  animation: mascotFloat 3.2s ease-in-out infinite;
+  transition: color .4s ease, transform .2s ease;
+}
+
+.mascot-character:hover {
+  transform: scale(1.06);
+}
+
+.mascot-character:active {
+  transform: scale(.96);
+}
+
+.mascot-character svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes mascotFloat {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.mascot-character:hover {
+  animation-play-state: paused;
+}
+
+/* Mood colors */
+.mascot-character.mood-excited {
+  color: #f59e0b;
+}
+
+.mascot-character.mood-happy {
+  color: #10b981;
+}
+
+.mascot-character.mood-neutral {
+  color: #4f46e5;
+}
+
+.mascot-character.mood-concerned {
+  color: #f97316;
+}
+
+.mascot-character.mood-worried {
+  color: #f43f5e;
+}
+
+/* body / ears use currentColor */
+.mascot-body,
+.mascot-ear {
+  fill: currentColor;
+}
+
+/* eyes */
+.mascot-eye-white {
+  fill: #fff;
+}
+
+.mascot-eye-pupil {
+  fill: #1f2937;
+  animation: mascotBlink 4.5s infinite;
+  transform-origin: center;
+}
+
+.mascot-eye-pupil.right {
+  animation-delay: .05s;
+}
+
+@keyframes mascotBlink {
+
+  0%,
+  92%,
+  100% {
+    transform: scaleY(1);
+  }
+
+  95% {
+    transform: scaleY(.1);
+  }
+}
+
+/* blush - only happy/excited */
+.mascot-blush {
+  opacity: 0;
+  fill: #fb7185;
+  transition: opacity .3s ease;
+}
+
+.mood-happy .mascot-blush,
+.mood-excited .mascot-blush {
+  opacity: .55;
+}
+
+/* mouths - default hidden, shown per mood */
+.mascot-mouth {
+  display: none;
+}
+
+.mood-excited .mouth-excited,
+.mood-happy .mouth-happy,
+.mood-neutral .mouth-neutral,
+.mood-concerned .mouth-concerned,
+.mood-worried .mouth-worried {
+  display: block;
+}
+
+/* Additional mouth expressions */
+.mood-surprised .mouth-surprised {
+  display: block;
+}
+
+.mood-thinking .mouth-thinking {
+  display: block;
+}
+
+.mood-wink .mouth-wink {
+  display: block;
+}
+
+.mood-sleepy .mouth-sleepy {
+  display: block;
+}
+
+/* Additional eye expressions */
+.mood-wink .eye-wink-closed {
+  display: block;
+}
+
+.mood-wink .mascot-eye-white.left {
+  display: none;
+}
+
+.mood-sleepy .eye-sleepy {
+  display: block;
+}
+
+.mood-sleepy .mascot-eye-white {
+  display: none;
+}
+
+/* worried sweat drop */
+.mascot-sweat {
+  display: none;
+}
+
+.mood-worried .mascot-sweat {
+  display: block;
+  animation: mascotSweat 1.6s ease-in-out infinite;
+}
+
+@keyframes mascotSweat {
+  0% {
+    transform: translateY(0);
+    opacity: .9;
+  }
+
+  100% {
+    transform: translateY(6px);
+    opacity: 0;
+  }
+}
+
+/* eyebrows for concerned/worried */
+.mascot-brow {
+  display: none;
+}
+
+.mood-concerned .mascot-brow,
+.mood-worried .mascot-brow {
+  display: block;
+}
+
+/* antenna star - only excited */
+.mascot-antenna-star {
+  opacity: 0;
+  transform-origin: center;
+  transition: opacity .3s ease;
+}
+
+.mood-excited .mascot-antenna-star {
+  opacity: 1;
+  animation: mascotStarPulse 1s ease-in-out infinite;
+}
+
+@keyframes mascotStarPulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.25);
+  }
+}
+
+/* sparkles around character - excited only */
+.mascot-sparkle {
+  opacity: 0;
+}
+
+.mood-excited .mascot-sparkle {
+  opacity: 1;
+  animation: mascotTwinkle 1.4s ease-in-out infinite;
+}
+
+.mascot-sparkle.s2 {
+  animation-delay: .3s;
+}
+
+.mascot-sparkle.s3 {
+  animation-delay: .6s;
+}
+
+@keyframes mascotTwinkle {
+
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(.5);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+/* ---- collapsed toggle ---- */
+.mascot-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: none;
+  background: var(--accent, #4f46e5);
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(79, 70, 229, .35);
+  transition: transform .2s ease;
+}
+
+.mascot-toggle:hover {
+  transform: scale(1.08);
+}
+
+.mascot-widget.collapsed .mascot-toggle {
+  display: flex;
+}
+
+.mascot-widget.collapsed .mascot-character,
+.mascot-widget.collapsed .mascot-bubble {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mascot-widget {
+    right: 12px;
+    bottom: 84px;
+  }
+
+  .mascot-character {
+    width: 60px;
+    height: 60px;
+  }
+
+  .mascot-bubble {
+    max-width: 190px;
+    font-size: 11.5px;
+    padding: 10px 26px 10px 12px;
+  }
+}

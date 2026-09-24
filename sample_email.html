@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Monthly Attendance Update - Sample</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .content {
+            background: #f9f9f9;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-top: none;
+        }
+
+        .attendance-card {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .stat-label {
+            font-weight: bold;
+            color: #666;
+        }
+
+        .stat-value {
+            font-weight: bold;
+        }
+
+        .status-safe {
+            color: #28a745;
+        }
+
+        .status-warning {
+            color: #ffc107;
+        }
+
+        .status-danger {
+            color: #dc3545;
+        }
+
+        .footer {
+            background: #666;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            border-radius: 0 0 10px 10px;
+            font-size: 12px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th {
+            padding: 8px;
+            text-align: left;
+            border: 1px solid #ddd;
+            background: #f0f0f0;
+        }
+
+        td {
+            padding: 8px;
+            border: 1px solid #ddd;
+        }
+
+        .disclaimer {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 10px 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h2>Monthly Attendance Update</h2>
+            <p>PVPSIT Attendance System</p>
+        </div>
+        <div class='content'>
+            <h3>Hello, AMBATI PRAVALIKA (24501A1202)</h3>
+            <p>Here is your latest attendance update:</p>
+
+            <div class='attendance-card'>
+                <div class='stat-row'>
+                    <span class='stat-label'>Session:</span>
+                    <span class='stat-value'>2_att_july_2026_aiml</span>
+                </div>
+                <div class='stat-row'>
+                    <span class='stat-label'>Present:</span>
+                    <span class='stat-value'>115</span>
+                </div>
+                <div class='stat-row'>
+                    <span class='stat-label'>Total Classes:</span>
+                    <span class='stat-value'>119</span>
+                </div>
+                <div class='stat-row'>
+                    <span class='stat-label'>Percentage:</span>
+                    <span class='stat-value'>96.64%</span>
+                </div>
+                <div class='stat-row' style='border-bottom: none;'>
+                    <span class='stat-label'>Status:</span>
+                    <span class='stat-value status-safe'>Safe</span>
+                </div>
+            </div>
+
+            <div class='attendance-card'>
+                <h4 style='margin-top: 0; color: #667eea;'>Subject-wise Attendance</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Subject Code</th>
+                            <th>Subject Name</th>
+                            <th style='text-align: center;'>Present</th>
+                            <th style='text-align: center;'>Total</th>
+                            <th style='text-align: center;'>%</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>23TP22</td>
+                            <td>T & P</td>
+                            <td style='text-align: center;'>84</td>
+                            <td style='text-align: center;'>99</td>
+                            <td style='text-align: center; color: #28a745; font-weight: bold;'>84.85%</td>
+                        </tr>
+                        <tr>
+                            <td>23ES1451</td>
+                            <td>DTI</td>
+                            <td style='text-align: center;'>15</td>
+                            <td style='text-align: center;'>21</td>
+                            <td style='text-align: center; color: #ffc107; font-weight: bold;'>71.43%</td>
+                        </tr>
+                        <tr>
+                            <td>23SA8454</td>
+                            <td>PYD</td>
+                            <td style='text-align: center;'>15</td>
+                            <td style='text-align: center;'>21</td>
+                            <td style='text-align: center; color: #ffc107; font-weight: bold;'>71.43%</td>
+                        </tr>
+                        <tr>
+                            <td>23IT3451</td>
+                            <td>OSSELAB</td>
+                            <td style='text-align: center;'>21</td>
+                            <td style='text-align: center;'>21</td>
+                            <td style='text-align: center; color: #28a745; font-weight: bold;'>100.00%</td>
+                        </tr>
+                        <tr>
+                            <td>23IT3401</td>
+                            <td>OS</td>
+                            <td style='text-align: center;'>20</td>
+                            <td style='text-align: center;'>20</td>
+                            <td style='text-align: center; color: #28a745; font-weight: bold;'>100.00%</td>
+                        </tr>
+                        <tr>
+                            <td>23IT3452</td>
+                            <td>DBMSLAB</td>
+                            <td style='text-align: center;'>23</td>
+                            <td style='text-align: center;'>23</td>
+                            <td style='text-align: center; color: #28a745; font-weight: bold;'>100.00%</td>
+                        </tr>
+                        <tr>
+                            <td>23IT3402</td>
+                            <td>DBMS</td>
+                            <td style='text-align: center;'>17</td>
+                            <td style='text-align: center;'>18</td>
+                            <td style='text-align: center; color: #28a745; font-weight: bold;'>94.44%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p><strong>Note:</strong> This is an automated email. Please check the student portal for detailed
+                attendance information.</p>
+
+            <div class='disclaimer'>
+                <p style='margin: 0; font-size: 13px; color: #856404;'>
+                    <strong>⚠️ Disclaimer:</strong> Unofficial view for convenience only. Final authority is the
+                    original/official records. Accuracy not guaranteed.
+                </p>
+            </div>
+        </div>
+        <div class='footer'>
+            <p>&copy; 2026 PVPSIT Attendance System | Generated on 06 Aug 2026 16:30</p>
+        </div>
+    </div>
+</body>
+
+</html>
